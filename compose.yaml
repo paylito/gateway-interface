@@ -1,0 +1,7 @@
+services:
+  payli-gateway-interface:
+    build: .
+    pull_policy: never
+    restart: on-failure
+    ports:
+      - "127.0.0.1:3000:3000"
