@@ -1,20 +1,16 @@
-import type { JSX } from "react";
+import type { JSX, CSSProperties } from "react";
 
 type BoxProps = {
   children: JSX.Element | JSX.Element[];
-  style?: Record<string, string>;
+  style?: CSSProperties;
   className?: string;
 };
 
 const Box = ({ children, style, className }: BoxProps) => {
   return (
     <div
-      className={className}
-      style={{
-        backgroundColor: "white",
-        borderRadius: "24px",
-        ...style,
-      }}
+      className={`bg-white rounded-[24px] ${className ?? ""}`}
+      style={style}
     >
       {children}
     </div>

@@ -10,7 +10,7 @@ import Select, {
   type StylesConfig,
 } from "react-select";
 
-type IOption = {
+export type IOption = {
   value: string;
   label: string;
   logo: string;
@@ -18,36 +18,10 @@ type IOption = {
 
 type CSelectProps = {
   title: string;
+  options: IOption[];
   placeholder: string;
+  onChange: (o: IOption) => void;
 };
-
-const networkOptions: IOption[] = [
-  {
-    value: "ethereum",
-    label: "Ethereum (ERC20)",
-    logo: "/public/assets/eth.svg",
-  },
-  {
-    label: "Binance",
-    value: "bsc",
-    logo: "/public/assets/bsc.svg",
-  },
-  {
-    value: "arbitrum",
-    label: "Arbitrum",
-    logo: "/public/assets/arbitrum.svg",
-  },
-  {
-    value: "base",
-    label: "Base",
-    logo: "/public/assets/base.svg",
-  },
-  {
-    value: "optimism",
-    label: "Optimism",
-    logo: "/public/assets/optimism.svg",
-  },
-];
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(false);
@@ -198,10 +172,21 @@ function Option<Option extends IOption, IsMulti extends boolean>(
   );
 }
 
-export default function CSelect({ title, placeholder }: CSelectProps) {
+export default function CSelect({
+  title,
+  placeholder,
+  options,
+  onChange,
+}: CSelectProps) {
   const [selected, setSelected] = useState<IOption | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (selected) {
+      onChange(selected);
+    }
+  }, [selected, onChange]);
 
   const styles: StylesConfig<IOption, false> = useMemo(
     () => ({
@@ -405,7 +390,7 @@ export default function CSelect({ title, placeholder }: CSelectProps) {
         onMenuOpen={() => setMenuOpen(true)}
         onMenuClose={() => setMenuOpen(false)}
         menuIsOpen={menuOpen}
-        options={networkOptions}
+        options={options}
         placeholder="Choose network"
         isSearchable={false}
         isClearable={false}
@@ -413,7 +398,7 @@ export default function CSelect({ title, placeholder }: CSelectProps) {
         blurInputOnSelect
         menuPlacement="bottom"
         styles={styles}
-        className="w-[325px]"
+        className="w-[100%] xl:min-w-[280px]"
         components={{
           Placeholder: PlaceholderMaker(placeholder),
           SingleValue,

@@ -8,30 +8,14 @@ type IOrderStatus = "pending" | "success" | "failed";
 
 const OrderFailed = () => {
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "center" }}>
+    <div className="lg:my-0 lg:mx-6 my-8 mx-6 lg:mb-0 mb-18">
+      <div className="flex justify-center">
         <img src="/public/assets/failed.svg" />
       </div>
 
-      <p
-        style={{
-          fontSize: 24,
-          fontWeight: "bold",
-          textAlign: "center",
-          paddingTop: 24,
-        }}
-      >
-        Payment Expired!
-      </p>
+      <p className="text-2xl font-bold text-center pt-6">Payment Expired!</p>
 
-      <p
-        style={{
-          fontSize: 18,
-          color: "#636363",
-          textAlign: "center",
-          paddingTop: 16,
-        }}
-      >
+      <p className="text-lg text-[#636363] text-center pt-4">
         Your payment of $320 has expired!
       </p>
     </div>
@@ -44,75 +28,31 @@ const OrderSuccess = () => {
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        display: "flex",
-        justifyContent: "center",
-        flexDirection: "column",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <img
-          src="/public/assets/success.svg"
-          style={{
-            width: 143,
-            height: 96,
-          }}
-        />
+    <div className="flex justify-center flex-col lg:mt-0 mt-15 lg:mx-0 mx-6 lg:mb-0 mb-10">
+      <div className="flex justify-center">
+        <img src="/public/assets/success.svg" className="w-[143px] h-24" />
       </div>
 
-      <p
-        style={{
-          fontSize: 24,
-          fontWeight: "bold",
-          textAlign: "center",
-          paddingTop: 24,
-        }}
-      >
-        Payment successful!
-      </p>
+      <p className="text-2xl font-bold text-center pt-6">Payment successful!</p>
 
-      <p
-        style={{
-          fontSize: 18,
-          color: "#636363",
-          textAlign: "center",
-          paddingTop: 16,
-        }}
-      >
+      <p className="text-lg text-[#636363] text-center pt-4">
         Your payment of $320 has been sent successfully.
       </p>
 
-      <div
-        style={{
-          backgroundColor: "#F7F7FF",
-          borderRadius: 24,
-          padding: "24px 32px",
-          margin: "24px 63px 0px 63px",
-        }}
-      >
-        <p style={{ fontSize: 18, fontWeight: "bold" }}>
+      <div className="bg-[#F7F7FF] rounded-[24px] px-8 py-6 mx-[63px] mt-6 lg:block hidden">
+        <p className="text-lg font-bold">
           Want a receipt?{" "}
-          <span style={{ fontSize: 12, color: "#636363" }}>(optional)</span>
+          <span className="text-xs text-[#636363]">(optional)</span>
         </p>
 
-        <p style={{ fontSize: 14, color: "#636363" }}>
+        <p className="text-sm text-[#636363]">
           enter your email to receive your payment receipt
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ display: "flex", marginTop: 16 }}>
+          <div className="flex mt-4">
             <input
-              style={{
-                backgroundColor: "white",
-                borderRadius: 12,
-                border: "2px solid #CBBEFF",
-                fontSize: 16,
-                padding: "10px 16px",
-                color: "#636363",
-                width: 340,
-              }}
+              className="bg-white rounded-xl border-2 border-[#CBBEFF] text-base px-4 py-[10px] text-[#636363] w-[340px]"
               type="email"
               name="email"
               placeholder="you.awesome@gmail.com"
@@ -120,15 +60,7 @@ const OrderSuccess = () => {
 
             <button
               type="submit"
-              style={{
-                cursor: "pointer",
-                backgroundColor: "#6449FF",
-                color: "white",
-                borderRadius: "12px",
-                fontSize: 16,
-                fontWeight: "700",
-                padding: "12px 16px",
-              }}
+              className="cursor-pointer bg-[#6449FF] text-white rounded-xl text-base font-bold px-4 py-3"
             >
               Get Receipt
             </button>
@@ -140,53 +72,98 @@ const OrderSuccess = () => {
 };
 
 const OrderPending = () => {
+  const tokenOptions = [
+    {
+      value: "usdt",
+      label: "USDT",
+      logo: "/public/assets/usdt.svg",
+    },
+    {
+      value: "usdc",
+      label: "USDC",
+      logo: "/public/assets/usdc.svg",
+    },
+    {
+      value: "eth",
+      label: "ETH",
+      logo: "/public/assets/eth.svg",
+    },
+    {
+      value: "bitcoin",
+      label: "Bitcoin",
+      logo: "/public/assets/bitcoin.svg",
+    },
+    {
+      value: "xlm",
+      label: "XLM",
+      logo: "/public/assets/xlm.svg",
+    },
+  ];
+
+  const networkOptions = [
+    {
+      value: "ethereum",
+      label: "Ethereum (ERC20)",
+      logo: "/public/assets/eth.svg",
+    },
+    {
+      label: "Binance",
+      value: "bsc",
+      logo: "/public/assets/bsc.svg",
+    },
+    {
+      value: "arbitrum",
+      label: "Arbitrum",
+      logo: "/public/assets/arbitrum.svg",
+    },
+    {
+      value: "base",
+      label: "Base",
+      logo: "/public/assets/base.svg",
+    },
+    {
+      value: "optimism",
+      label: "Optimism",
+      logo: "/public/assets/optimism.svg",
+    },
+  ];
+
+  const handleTokenChange = (e) => {
+    console.log(e);
+  };
+
+  const handleNetworkChange = () => { };
+
   return (
     <>
-      <p style={{ fontWeight: "bold" }} className="lg:text-[24px] text-[18px]">
+      <p className="lg:text-[24px] text-[18px] font-bold m-4 lg:m-0 mb-0 lg:text-left text-center">
         Select an asset and network you want to pay
       </p>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <CSelect title="Asset Type" placeholder="Choose asset" />
-        <CSelect title="Network" placeholder="Choose network" />
+
+      <div className="flex lg:justify-between lg:mt-3 m-4 flex-col xl:flex-row">
+        <CSelect
+          title="Asset Type"
+          placeholder="Choose asset"
+          options={tokenOptions}
+          onChange={handleTokenChange}
+        />
+
+        <CSelect
+          title="Network"
+          placeholder="Choose network"
+          options={networkOptions}
+          onChange={handleNetworkChange}
+        />
       </div>
 
-      <div
-        style={{
-          background: "#F7F7FF",
-          borderRadius: "12px",
-          marginTop: 32,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <p style={{ fontSize: 24, paddingTop: 24 }}>
-          Please send{" "}
-          <span style={{ color: "#4D35DB", fontWeight: 600 }}>$320</span> to the
-          address below
+      <div className="bg-[#F7F7FF] rounded-xl lg:mt-8 m-4 mt-6 flex flex-col justify-center items-center">
+        <p className="lg:text-2xl test-[18px] lg:pt-6 pt-3 font-medium">
+          Please send <span className="text-[#4D35DB] font-semibold">$320</span>{" "}
+          to the address below
         </p>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            width: "100%",
-            padding: 24,
-          }}
-        >
-          <div
-            style={{
-              width: 210,
-              height: 210,
-              border: "2px solid #E5DFFF",
-              background: "white",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 12,
-            }}
-          >
+        <div className="flex lg:justify-between justify-center items-center lg:p-6 xl:flex-row flex-col w-[100%] gap-5">
+          <div className="min-w-[210px] h-[210px] border-2 border-[#E5DFFF] bg-white flex justify-center items-center rounded-xl lg:mt-0 mt-4">
             <Qrcode
               content="https://example.com2917439826439436239"
               logo="/public/assets/usdt.svg"
@@ -195,58 +172,15 @@ const OrderPending = () => {
             />
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                background: "white",
-                borderRadius: 12,
-                fontWeight: "bold",
-                fontSize: 18,
-                border: "2px solid #E5DFFF",
-                height: 68,
-                padding: "10px 12px 10px 16px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "end",
-                width: 384,
-                overflowWrap: "anywhere",
-                lineHeight: "22px",
-                gap: 10,
-              }}
-            >
-              <p>0x1212121212121212121212121212121212121212</p>
+          <div className="flex flex-col items-center justify-center lg:mt-[0px] mt-3 lg:mx-0 w-[90%] max-w-[400px]">
+            <div className="bg-white lg:rounded-[12px] rounded-[8px] font-bold text-lg border-2 border-[#E5DFFF] lg:px-3 lg:py-[10px] lg:pl-4 p-3 flex justify-between items-end break-all leading-[22px] gap-[10px] w-[100%]">
+              <p>0x4093753409r3abcxd23979307abcdn1235abcdefg</p>
 
-              <img
-                src="/public/assets/copy.svg"
-                style={{
-                  width: 24,
-                  height: 24,
-                }}
-              />
+              <img src="/public/assets/copy.svg" className="w-6 h-6" />
             </div>
 
-            <div
-              style={{
-                width: 384,
-                marginTop: 24,
-                background: "#FFF4EA",
-                border: "2px solid #ECDAC9",
-                borderRadius: "16px",
-                padding: "12px 16px",
-              }}
-            >
-              Send only{" "}
-              <img
-                src="/public/assets/usdc.svg"
-                style={{ display: "inline" }}
-              />{" "}
+            <div className="w-[100%] lg:mt-6 mt-2 bg-[#FFF4EA] border-2 border-[#ECDAC9] lg:rounded-[12px] rounded-[8px] lg:px-4 px-3 lg:py-2 py-2 text-[12px] lg:text-left text-center">
+              Send only <img src="/public/assets/usdc.svg" className="inline" />{" "}
               on Binance network
             </div>
           </div>
@@ -260,41 +194,20 @@ const OrderForm = () => {
   const [status, setStatus] = useState<IOrderStatus>("pending");
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-      }}
-    >
-      <div className="mx-[300px]">
-        <div
-          style={{
-            display: "flex",
-            margin: "60px 0 35px 0",
-          }}
-        >
+    <div className="flex flex-col h-screen">
+      <div>
+        <div className="lg:mt-[60px] lg:mb-[35px] hidden lg:flex">
           <img src="/public/assets/payli_medium.svg" />
-          <img
-            src="/public/assets/payli_logotype.svg"
-            style={{ marginLeft: 14 }}
-          />
+          <img src="/public/assets/payli_logotype.svg" className="ml-[14px]" />
         </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-          }}
-        >
+
+        <div className="flex lg:flex-row flex-col-reverse w-full">
           <Box
             style={{
-              padding: "40px",
-              minHeight: status === "failed" ? "295px" : "500px",
-              border: "2px solid transparent",
               background:
                 "linear-gradient(#fff, #fff) padding-box, linear-gradient(to right, #E9E9FE, white) border-box",
             }}
-            className="w-2/3"
+            className="lg:w-2/3 min-w-[350px] lg:p-10 border-2 border-transparent mt-[12px] lg:mt-[0px] lg:ml-[0] ml-[18px] lg:mr-[0px] mr-[18px]"
           >
             {status === "pending" ? <OrderPending /> : <p />}
 
@@ -304,109 +217,63 @@ const OrderForm = () => {
           </Box>
 
           <Box
-            className="w-1/3 lg:ml-[32px]"
+            className="lg:w-1/3 min-w-[350px] lg:ml-[32px] ml-[18px] lg:mr-[0px] mr-[18px] lg:px-8 px-4 lg:py-10 py-[16px] max-h-[362px] lg:mt-[0px] mt-[56px]"
             style={{
-              padding: "40px 32px",
-              maxHeight: "362px",
               borderTop: "5px solid #6449FF",
             }}
           >
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div className="flex gap-[10px] items-center lg:justify-start justify-center">
               <Timer startDate={Date.now()} endDate={Date.now() + 40000} />
 
               <div>
-                <p style={{ fontWeight: "bold", fontSize: 18 }}>14:30</p>
-                <p style={{ color: "#636363", fontSize: 14 }}>
+                <p className="font-bold lg:text-lg text-[18px]">14:30</p>
+                <p className="text-[#636363] text-sm hidden lg:block">
                   Expiration time
                 </p>
               </div>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: 32,
-                fontSize: 16,
-              }}
-            >
-              <p style={{ color: "#636363" }}>ID</p>
-              <p style={{ fontWeight: "bold" }}>299190</p>
+            <div className="flex justify-between lg:mt-8 mt-4">
+              <p className="text-[#636363] lg:text-base text-[14px]">ID</p>
+              <p className="font-bold lg:text-base text-[16px]">299190</p>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: 23,
-              }}
-            >
-              <p style={{ color: "#636363" }}>To</p>
-              <p
-                style={{
-                  fontWeight: "bold",
-                  gap: 8,
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
+            <div className="flex justify-between lg:mt-[23px] mt-3">
+              <p className="text-[#636363]  lg:text-base text-[14px]">To</p>
+              <p className="font-bold gap-2 flex items-center lg:text-base text-[16px]">
                 <img
                   src="/public/assets/telegram.svg"
-                  style={{
-                    display: "inline",
-                    width: 22,
-                    height: 22,
-                  }}
+                  className="inline w-[22px] h-[22px]"
                 />
                 @heyamir
               </p>
             </div>
 
             <div
+              className="w-full h-[1px] lg:mt-[23px] mt-3"
               style={{
-                width: "100%",
-                height: 1,
-                marginTop: 23,
                 background:
                   "repeating-linear-gradient(to right, #C7C7C7 0 6px, transparent 6px 12px)",
               }}
             />
 
-            <div
-              style={{
-                marginTop: 23,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
+            <div className="lg:mt-[23px] mt-3 flex justify-between items-center">
               <div>
-                <p
-                  style={{
-                    color: "#636363",
-                    fontSize: 16,
-                  }}
-                >
+                <p className="text-[#636363] lg:text-base text-[14px]">
                   You have to pay
                 </p>
 
-                <p
-                  style={{
-                    fontSize: 40,
-                    fontWeight: "bold",
-                  }}
-                >
-                  $320
-                </p>
+                <p className="text-[40px] font-bold lg:block hidden">$320</p>
               </div>
 
-              <img
-                src="/public/assets/receipt.svg"
-                style={{
-                  width: 40,
-                  height: 40,
-                }}
-              />
+              <div className="flex gap-2 items-center">
+                <img
+                  src="/public/assets/receipt.svg"
+                  className="lg:w-10 w-6 lg:h-10 h-6"
+                />
+
+                <p className="lg:hidden block font-bold text-[22px]">$320</p>
+              </div>
             </div>
           </Box>
         </div>

@@ -1,20 +1,9 @@
 const OrderLoading = () => {
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <div className="h-screen flex items-center justify-center">
       <img
         src="/public/assets/loading.svg"
-        className="spinner"
-        style={{
-          width: "64px",
-          height: "64px",
-        }}
+        className="spinner w-16 h-16"
       />
     </div>
   );
