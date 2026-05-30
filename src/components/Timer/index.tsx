@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 type Props = {
-  startDate: Date | string;
-  endDate: Date | string;
+  startDate: Date | string | number;
+  endDate: Date | string | number;
   size?: number;
 };
 

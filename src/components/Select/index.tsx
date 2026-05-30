@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Select, {
   components,
+  type ControlProps,
   type DropdownIndicatorProps,
+  type GroupBase,
   type MenuProps,
   type OptionProps,
   type PlaceholderProps,
@@ -13,14 +15,25 @@ import Select, {
 export type IOption = {
   value: string;
   label: string;
+  name: string;
+  symbol?: string;
   logo: string;
+  /** For network options: list of token values supported on this network. */
+  tokens?: string[];
 };
 
 type CSelectProps = {
   title: string;
   options: IOption[];
   placeholder: string;
-  onChange: (o: IOption) => void;
+  value: IOption | null;
+  onChange: (o: IOption | null) => void;
+  /**
+   * When true, the selected value renders compactly (logo + symbol only),
+   * used for tokens. When false, the full name (with symbol in parens, if
+   * present) is shown, used for networks.
+   */
+  compactValue?: boolean;
 };
 
 function useIsMobile(breakpoint = 768) {
@@ -93,20 +106,31 @@ function PlaceholderMaker(placeHolder: string) {
   return Placeholder;
 }
 
-function SingleValue<Option extends IOption, IsMulti extends boolean>(
-  props: SingleValueProps<Option, IsMulti>,
-) {
-  const { data } = props;
+function SingleValueMaker(compact: boolean) {
+  function SingleValue<Option extends IOption, IsMulti extends boolean>(
+    props: SingleValueProps<Option, IsMulti>,
+  ) {
+    const { data } = props;
 
-  return (
-    <components.SingleValue {...props}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <img src={data.logo} className="w-[32px] h-[32px]" />
+    return (
+      <components.SingleValue {...props}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <img src={data.logo} className="w-[32px] h-[32px]" />
 
-        <span>{data.label}</span>
-      </div>
-    </components.SingleValue>
-  );
+          {compact ? (
+            <span>{data.symbol ?? data.name}</span>
+          ) : (
+            <span>
+              {data.name}
+              {data.symbol ? ` (${data.symbol})` : ""}
+            </span>
+          )}
+        </div>
+      </components.SingleValue>
+    );
+  }
+
+  return SingleValue;
 }
 
 function Option<Option extends IOption, IsMulti extends boolean>(
@@ -137,7 +161,12 @@ function Option<Option extends IOption, IsMulti extends boolean>(
           >
             <img src={data.logo} className="w-[24px] h-[24px]" />
 
-            <span style={{ fontSize: 18 }}>{data.label}</span>
+            <span style={{ fontSize: 18 }}>
+              <span style={{ color: "#000000" }}>{data.name}</span>
+              {data.symbol ? (
+                <span style={{ color: "#636363" }}> ({data.symbol})</span>
+              ) : null}
+            </span>
           </div>
 
           {isSelected ? (
@@ -176,17 +205,19 @@ export default function CSelect({
   title,
   placeholder,
   options,
+  value,
   onChange,
+  compactValue = false,
 }: CSelectProps) {
-  const [selected, setSelected] = useState<IOption | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  // Track the committed open state so the Control's mousedown handler can
+  // decide whether to force the menu open without relying on a stale closure.
+  const menuOpenRef = useRef(menuOpen);
   useEffect(() => {
-    if (selected) {
-      onChange(selected);
-    }
-  }, [selected, onChange]);
+    menuOpenRef.current = menuOpen;
+  }, [menuOpen]);
 
   const styles: StylesConfig<IOption, false> = useMemo(
     () => ({
@@ -239,18 +270,19 @@ export default function CSelect({
         border: "1px solid #E5E7EB",
         boxShadow: "0 10px 35px rgba(0,0,0,0.12)",
         animation: isMobile ? "none" : "dropdown 0.14s ease",
+        zIndex: 20,
         ...(isMobile
           ? {
-            position: "static",
-            width: "100%",
-            border: "none",
-            boxShadow: "none",
-            marginTop: 0,
-            background: "transparent",
-          }
+              position: "static",
+              width: "100%",
+              border: "none",
+              boxShadow: "none",
+              marginTop: 0,
+              background: "transparent",
+            }
           : {
-            borderRadius: 16,
-          }),
+              borderRadius: 16,
+            }),
       }),
 
       menuList: (base) => ({
@@ -272,9 +304,31 @@ export default function CSelect({
     [isMobile],
   );
 
-  function Menu<Option, IsMulti extends boolean, Group>(
-    props: MenuProps<Option, IsMulti, Group>,
-  ) {
+  // Force the menu open on any mousedown within the control. react-select
+  // handles closing (on outside click / selection), so clicking the control
+  // reliably opens it no matter where inside the control you click.
+  const Control = useMemo(() => {
+    return function ControlComponent<
+      Option extends IOption,
+      IsMulti extends boolean,
+    >(props: ControlProps<Option, IsMulti>) {
+      return (
+        <div
+          onMouseDown={() => {
+            if (!menuOpenRef.current) setMenuOpen(true);
+          }}
+        >
+          <components.Control {...props} />
+        </div>
+      );
+    };
+  }, []);
+
+  function Menu<
+    Option,
+    IsMulti extends boolean,
+    Group extends GroupBase<Option>,
+  >(props: MenuProps<Option, IsMulti, Group>) {
     if (!isMobile) {
       return <components.Menu {...props}>{props.children}</components.Menu>;
     }
@@ -291,7 +345,11 @@ export default function CSelect({
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "stretch",
-            pointerEvents: "none",
+            background: "rgba(0,0,0,0.35)",
+          }}
+          onMouseDown={(e) => {
+            // Close when tapping the dimmed backdrop.
+            if (e.target === e.currentTarget) setMenuOpen(false);
           }}
         >
           <div
@@ -341,18 +399,17 @@ export default function CSelect({
                   borderRadius: 9999,
                   border: "none",
                   background: "transparent",
-                  color: "#6B7280",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
                 }}
-              ></button>
-
-              <img
-                src="/public/assets/close_black.svg"
-                style={{ width: 24, height: 24 }}
-              />
+              >
+                <img
+                  src="/public/assets/close_black.svg"
+                  style={{ width: 24, height: 24 }}
+                />
+              </button>
             </div>
 
             <div style={{ flex: "1 1 auto", overflow: "hidden" }}>
@@ -366,7 +423,7 @@ export default function CSelect({
   }
 
   return (
-    <div>
+    <div className="w-full">
       <style>{`
         @keyframes dropdown {
           from { opacity: 0; transform: translateY(-6px); }
@@ -382,26 +439,26 @@ export default function CSelect({
       {title && <p style={{ padding: "8px 0", fontWeight: "bold" }}>{title}</p>}
 
       <Select<IOption, false>
-        value={selected}
-        onChange={(value) => {
-          setSelected(value);
+        value={value}
+        onChange={(v) => {
+          onChange(v);
           setMenuOpen(false);
         }}
         onMenuOpen={() => setMenuOpen(true)}
         onMenuClose={() => setMenuOpen(false)}
         menuIsOpen={menuOpen}
         options={options}
-        placeholder="Choose network"
+        placeholder={placeholder}
         isSearchable={false}
         isClearable={false}
         closeMenuOnSelect
-        blurInputOnSelect
         menuPlacement="bottom"
         styles={styles}
-        className="w-[100%] xl:min-w-[280px]"
+        className="w-full"
         components={{
+          Control,
           Placeholder: PlaceholderMaker(placeholder),
-          SingleValue,
+          SingleValue: SingleValueMaker(compactValue),
           Option,
           DropdownIndicator,
           IndicatorSeparator: () => null,

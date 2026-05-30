@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Box from "../components/Box";
 import Qrcode from "../components/Qrcode";
-import CSelect from "../components/Select";
+import CSelect, { type IOption } from "../components/Select";
 import Timer from "../components/Timer";
+import OrderLoading from "./OrderLoading";
 
-type IOrderStatus = "pending" | "success" | "failed";
+export type IOrderStatus = "pending" | "success" | "failed";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const OrderFailed = () => {
   return (
@@ -23,8 +26,20 @@ const OrderFailed = () => {
 };
 
 const OrderSuccess = () => {
-  const handleSubmit = (e) => {
+  const [email, setEmail] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  const isValid = EMAIL_REGEX.test(email.trim());
+  const showError = touched && email.length > 0 && !isValid;
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isValid) {
+      setTouched(true);
+      return;
+    }
+
+    // Submit the receipt request here.
   };
 
   return (
@@ -39,7 +54,7 @@ const OrderSuccess = () => {
         Your payment of $320 has been sent successfully.
       </p>
 
-      <div className="bg-[#F7F7FF] rounded-[24px] px-8 py-6 mx-[63px] mt-6 lg:block hidden">
+      <div className="bg-[#F7F7FF] rounded-[24px] px-6 sm:px-8 py-6 lg:mx-[63px] mt-6">
         <p className="text-lg font-bold">
           Want a receipt?{" "}
           <span className="text-xs text-[#636363]">(optional)</span>
@@ -50,89 +65,216 @@ const OrderSuccess = () => {
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="flex mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <input
-              className="bg-white rounded-xl border-2 border-[#CBBEFF] text-base px-4 py-[10px] text-[#636363] w-[340px]"
+              className={`bg-white rounded-xl border-2 text-base px-4 py-[10px] text-[#636363] w-full sm:flex-1 outline-none transition-colors ${showError
+                  ? "border-[#FF4D4D] focus:border-[#FF4D4D]"
+                  : "border-[#CBBEFF] focus:border-[#6449FF]"
+                }`}
               type="email"
               name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setTouched(true)}
+              aria-invalid={showError}
               placeholder="you.awesome@gmail.com"
             />
 
             <button
               type="submit"
-              className="cursor-pointer bg-[#6449FF] text-white rounded-xl text-base font-bold px-4 py-3"
+              disabled={!isValid}
+              className={`rounded-xl text-base font-bold px-4 py-3 transition-colors ${isValid
+                  ? "cursor-pointer bg-[#6449FF] hover:bg-[#5238e6] text-white"
+                  : "cursor-not-allowed bg-[#CBBEFF] text-white"
+                }`}
             >
               Get Receipt
             </button>
           </div>
+
+          {showError && (
+            <p className="text-[#FF4D4D] text-sm mt-2">
+              Please enter a valid email address.
+            </p>
+          )}
         </form>
       </div>
     </div>
   );
 };
 
+const PAYMENT_ADDRESS = "0x4093753409r3abcxd23979307abcdn1235abcdefg";
+
+const TOKEN_OPTIONS: IOption[] = [
+  {
+    value: "usdt",
+    name: "Tether",
+    symbol: "USDT",
+    label: "Tether (USDT)",
+    logo: "/public/assets/usdt.svg",
+  },
+  {
+    value: "usdc",
+    name: "USD Coin",
+    symbol: "USDC",
+    label: "USD Coin (USDC)",
+    logo: "/public/assets/usdc.svg",
+  },
+  {
+    value: "eth",
+    name: "Ethereum",
+    symbol: "ETH",
+    label: "Ethereum (ETH)",
+    logo: "/public/assets/eth.svg",
+  },
+  {
+    value: "btc",
+    name: "Bitcoin",
+    symbol: "BTC",
+    label: "Bitcoin (BTC)",
+    logo: "/public/assets/bitcoin.svg",
+  },
+  {
+    value: "xlm",
+    name: "Stellar",
+    symbol: "XLM",
+    label: "Stellar (XLM)",
+    logo: "/public/assets/xlm.svg",
+  },
+];
+
+const NETWORK_OPTIONS: IOption[] = [
+  {
+    value: "ethereum",
+    name: "Ethereum",
+    symbol: "ERC20",
+    label: "Ethereum (ERC20)",
+    logo: "/public/assets/eth.svg",
+    tokens: ["usdt", "usdc", "eth"],
+  },
+  {
+    value: "bsc",
+    name: "Binance",
+    symbol: "BEP20",
+    label: "Binance (BEP20)",
+    logo: "/public/assets/bsc.svg",
+    tokens: ["usdt", "usdc"],
+  },
+  {
+    value: "tron",
+    name: "Tron",
+    symbol: "TRC20",
+    label: "Tron (TRC20)",
+    logo: "/public/assets/tron.svg",
+    tokens: ["usdt", "usdc"],
+  },
+  {
+    value: "solana",
+    name: "Solana",
+    label: "Solana",
+    logo: "/public/assets/solana.svg",
+    tokens: ["usdt", "usdc"],
+  },
+  {
+    value: "polygon",
+    name: "Polygon",
+    label: "Polygon",
+    logo: "/public/assets/polygon.svg",
+    tokens: ["usdt", "usdc"],
+  },
+  {
+    value: "arbitrum",
+    name: "Arbitrum",
+    label: "Arbitrum",
+    logo: "/public/assets/arbitrum.svg",
+    tokens: ["usdt", "usdc", "eth"],
+  },
+  {
+    value: "base",
+    name: "Base",
+    label: "Base",
+    logo: "/public/assets/base.svg",
+    tokens: ["usdc", "eth"],
+  },
+  {
+    value: "optimism",
+    name: "Optimism",
+    label: "Optimism",
+    logo: "/public/assets/optimism.svg",
+    tokens: ["usdt", "usdc", "eth"],
+  },
+  {
+    value: "bitcoin",
+    name: "Bitcoin",
+    symbol: "BTC",
+    label: "Bitcoin (BTC)",
+    logo: "/public/assets/bitcoin.svg",
+    tokens: ["btc"],
+  },
+  {
+    value: "stellar",
+    name: "Stellar",
+    label: "Stellar",
+    logo: "/public/assets/xlm.svg",
+    tokens: ["usdc", "xlm"],
+  },
+];
+
 const OrderPending = () => {
-  const tokenOptions = [
-    {
-      value: "usdt",
-      label: "USDT",
-      logo: "/public/assets/usdt.svg",
-    },
-    {
-      value: "usdc",
-      label: "USDC",
-      logo: "/public/assets/usdc.svg",
-    },
-    {
-      value: "eth",
-      label: "ETH",
-      logo: "/public/assets/eth.svg",
-    },
-    {
-      value: "bitcoin",
-      label: "Bitcoin",
-      logo: "/public/assets/bitcoin.svg",
-    },
-    {
-      value: "xlm",
-      label: "XLM",
-      logo: "/public/assets/xlm.svg",
-    },
-  ];
+  const [token, setToken] = useState<IOption | null>(null);
+  const [network, setNetwork] = useState<IOption | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const networkOptions = [
-    {
-      value: "ethereum",
-      label: "Ethereum (ERC20)",
-      logo: "/public/assets/eth.svg",
-    },
-    {
-      label: "Binance",
-      value: "bsc",
-      logo: "/public/assets/bsc.svg",
-    },
-    {
-      value: "arbitrum",
-      label: "Arbitrum",
-      logo: "/public/assets/arbitrum.svg",
-    },
-    {
-      value: "base",
-      label: "Base",
-      logo: "/public/assets/base.svg",
-    },
-    {
-      value: "optimism",
-      label: "Optimism",
-      logo: "/public/assets/optimism.svg",
-    },
-  ];
+  // Networks limited to those supporting the chosen token (and vice versa).
+  const availableNetworks = useMemo(
+    () =>
+      token
+        ? NETWORK_OPTIONS.filter((n) => n.tokens?.includes(token.value))
+        : NETWORK_OPTIONS,
+    [token],
+  );
 
-  const handleTokenChange = (e) => {
-    console.log(e);
+  const availableTokens = useMemo(
+    () =>
+      network
+        ? TOKEN_OPTIONS.filter((t) => network.tokens?.includes(t.value))
+        : TOKEN_OPTIONS,
+    [network],
+  );
+
+  const handleTokenChange = (next: IOption | null) => {
+    setToken(next);
+    // Drop an incompatible network so the user must reselect a supported one.
+    if (next && network && !network.tokens?.includes(next.value)) {
+      setNetwork(null);
+    }
   };
 
-  const handleNetworkChange = () => { };
+  const handleNetworkChange = (next: IOption | null) => {
+    setNetwork(next);
+    // Drop an incompatible token so the user must reselect a supported one.
+    if (next && token && !next.tokens?.includes(token.value)) {
+      setToken(null);
+    }
+  };
+
+  const isComplete =
+    !!token && !!network && !!network.tokens?.includes(token.value);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(PAYMENT_ADDRESS);
+    } catch {
+      // Clipboard may be unavailable (e.g. insecure context); ignore silently.
+    }
+    setCopied(true);
+  };
+
+  useEffect(() => {
+    if (!copied) return;
+    const timeout = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timeout);
+  }, [copied]);
 
   return (
     <>
@@ -140,61 +282,110 @@ const OrderPending = () => {
         Select an asset and network you want to pay
       </p>
 
-      <div className="flex lg:justify-between lg:mt-3 m-4 flex-col xl:flex-row">
+      <div className="flex lg:mt-3 m-4 flex-col xl:flex-row gap-4 xl:gap-6">
         <CSelect
           title="Asset Type"
           placeholder="Choose asset"
-          options={tokenOptions}
+          options={availableTokens}
+          value={token}
           onChange={handleTokenChange}
+          compactValue
         />
 
         <CSelect
           title="Network"
           placeholder="Choose network"
-          options={networkOptions}
+          options={availableNetworks}
+          value={network}
           onChange={handleNetworkChange}
         />
       </div>
 
-      <div className="bg-[#F7F7FF] rounded-xl lg:mt-8 m-4 mt-6 flex flex-col justify-center items-center">
-        <p className="lg:text-2xl test-[18px] lg:pt-6 pt-3 font-medium">
-          Please send <span className="text-[#4D35DB] font-semibold">$320</span>{" "}
-          to the address below
-        </p>
+      <div className="bg-[#F7F7FF] rounded-xl lg:mt-8 m-4 mt-6 flex flex-col justify-center items-center min-h-[280px]">
+        {isComplete ? (
+          <>
+            <p className="lg:text-2xl text-[18px] lg:pt-6 pt-4 font-medium text-center px-4">
+              Please send{" "}
+              <span className="text-[#4D35DB] font-semibold">$320</span> to the
+              address below
+            </p>
 
-        <div className="flex lg:justify-between justify-center items-center lg:p-6 xl:flex-row flex-col w-[100%] gap-5">
-          <div className="min-w-[210px] h-[210px] border-2 border-[#E5DFFF] bg-white flex justify-center items-center rounded-xl lg:mt-0 mt-4">
-            <Qrcode
-              content="https://example.com2917439826439436239"
-              logo="/public/assets/usdt.svg"
-              width={180}
-              height={180}
-            />
-          </div>
+            <div className="flex lg:justify-between justify-center items-center lg:p-6 p-4 xl:flex-row flex-col w-full gap-5">
+              <div className="min-w-[210px] h-[210px] border-2 border-[#E5DFFF] bg-white flex justify-center items-center rounded-xl">
+                <Qrcode
+                  content={PAYMENT_ADDRESS}
+                  logo={token.logo}
+                  width={180}
+                  height={180}
+                />
+              </div>
 
-          <div className="flex flex-col items-center justify-center lg:mt-[0px] mt-3 lg:mx-0 w-[90%] max-w-[400px]">
-            <div className="bg-white lg:rounded-[12px] rounded-[8px] font-bold text-lg border-2 border-[#E5DFFF] lg:px-3 lg:py-[10px] lg:pl-4 p-3 flex justify-between items-end break-all leading-[22px] gap-[10px] w-[100%]">
-              <p>0x4093753409r3abcxd23979307abcdn1235abcdefg</p>
+              <div className="flex flex-col items-center justify-center lg:mx-0 w-[90%] max-w-[400px]">
+                <div className="relative bg-white lg:rounded-[12px] rounded-[8px] font-bold text-lg border-2 border-[#E5DFFF] lg:px-3 lg:py-[10px] lg:pl-4 p-3 flex justify-between items-center break-all leading-[22px] gap-[10px] w-full">
+                  <p>{PAYMENT_ADDRESS}</p>
 
-              <img src="/public/assets/copy.svg" className="w-6 h-6" />
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    aria-label="Copy address"
+                    className="relative cursor-pointer shrink-0 flex items-center justify-center"
+                  >
+                    <img src="/public/assets/copy.svg" className="w-6 h-6" />
+
+                    <span
+                      className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#6449FF] px-2 py-1 text-xs font-semibold text-white transition-all duration-200 ${copied
+                          ? "opacity-100 -translate-y-0"
+                          : "opacity-0 translate-y-1 pointer-events-none"
+                        }`}
+                    >
+                      Copied!
+                    </span>
+                  </button>
+                </div>
+
+                <div className="w-full lg:mt-6 mt-2 bg-[#FFF4EA] border-2 border-[#ECDAC9] lg:rounded-[12px] rounded-[8px] lg:px-4 px-3 lg:py-2 py-2 text-[12px] lg:text-left text-center">
+                  Send only{" "}
+                  <img
+                    src={token.logo}
+                    className="inline w-4 h-4 align-text-bottom"
+                  />{" "}
+                  <span className="font-semibold">{token.symbol}</span> on{" "}
+                  <span className="font-semibold">{network.name}</span> network
+                </div>
+              </div>
             </div>
-
-            <div className="w-[100%] lg:mt-6 mt-2 bg-[#FFF4EA] border-2 border-[#ECDAC9] lg:rounded-[12px] rounded-[8px] lg:px-4 px-3 lg:py-2 py-2 text-[12px] lg:text-left text-center">
-              Send only <img src="/public/assets/usdc.svg" className="inline" />{" "}
-              on Binance network
-            </div>
-          </div>
-        </div>
+          </>
+        ) : (
+          <p className="text-[#9CA3AF] text-center px-6 text-sm lg:text-base">
+            Select an asset and a network to see the payment address.
+          </p>
+        )}
       </div>
     </>
   );
 };
 
-const OrderForm = () => {
-  const [status, setStatus] = useState<IOrderStatus>("pending");
+type OrderFormProps = {
+  status: IOrderStatus;
+};
+
+const OrderForm = ({ status }: OrderFormProps) => {
+  // Show a brief loading state before revealing the pending form. Non-pending
+  // statuses (success / failed) render immediately.
+  const [ready, setReady] = useState(status !== "pending");
+
+  useEffect(() => {
+    if (status !== "pending") return;
+    const timeout = setTimeout(() => setReady(true), 2500);
+    return () => clearTimeout(timeout);
+  }, [status]);
+
+  if (!ready) {
+    return <OrderLoading />;
+  }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen">
       <div>
         <div className="lg:mt-[60px] lg:mb-[35px] hidden lg:flex">
           <img src="/public/assets/payli_medium.svg" />
@@ -207,17 +398,17 @@ const OrderForm = () => {
               background:
                 "linear-gradient(#fff, #fff) padding-box, linear-gradient(to right, #E9E9FE, white) border-box",
             }}
-            className="lg:w-2/3 min-w-[350px] lg:p-10 border-2 border-transparent mt-[12px] lg:mt-[0px] lg:ml-[0] ml-[18px] lg:mr-[0px] mr-[18px]"
+            className="lg:w-2/3 min-w-0 lg:p-10 border-2 border-transparent mt-[12px] lg:mt-[0px] lg:ml-[0] ml-[18px] lg:mr-[0px] mr-[18px]"
           >
-            {status === "pending" ? <OrderPending /> : <p />}
+            {status === "pending" && <OrderPending />}
 
-            {status === "success" ? <OrderSuccess /> : <p />}
+            {status === "success" && <OrderSuccess />}
 
-            {status === "failed" ? <OrderFailed /> : <p />}
+            {status === "failed" && <OrderFailed />}
           </Box>
 
           <Box
-            className="lg:w-1/3 min-w-[350px] lg:ml-[32px] ml-[18px] lg:mr-[0px] mr-[18px] lg:px-8 px-4 lg:py-10 py-[16px] max-h-[362px] lg:mt-[0px] mt-[56px]"
+            className="lg:w-1/3 min-w-0 lg:ml-[32px] ml-[18px] lg:mr-[0px] mr-[18px] lg:px-8 px-4 lg:py-10 py-[16px] max-h-[362px] lg:mt-[0px] mt-[56px]"
             style={{
               borderTop: "5px solid #6449FF",
             }}

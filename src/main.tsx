@@ -17,9 +17,11 @@ createRoot(document.getElementById("root")!).render(
       />
       <BrowserRouter>
         <Routes>
-          <Route path="/:id" element={<Order />} />
+          <Route path="/success" element={<Order status="success" />} />
+          <Route path="/failed" element={<Order status="failed" />} />
+          <Route path="/:id" element={<Order status="pending" />} />
 
-          <Route path="/" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </div>

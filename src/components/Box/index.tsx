@@ -1,7 +1,7 @@
-import type { JSX, CSSProperties } from "react";
+import type { ReactNode, CSSProperties } from "react";
 
 type BoxProps = {
-  children: JSX.Element | JSX.Element[];
+  children: ReactNode;
   style?: CSSProperties;
   className?: string;
 };
