@@ -2,7 +2,7 @@ const OrderLoading = () => {
   return (
     <div className="h-screen flex items-center justify-center">
       <img
-        src="/public/assets/loading.svg"
+        src="/assets/loading.svg"
         className="spinner w-16 h-16"
       />
     </div>

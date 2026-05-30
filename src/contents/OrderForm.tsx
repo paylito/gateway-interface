@@ -13,7 +13,7 @@ const OrderFailed = () => {
   return (
     <div className="lg:my-0 lg:mx-6 my-8 mx-6 lg:mb-0 mb-18">
       <div className="flex justify-center">
-        <img src="/public/assets/failed.svg" />
+        <img src="/assets/failed.svg" />
       </div>
 
       <p className="text-2xl font-bold text-center pt-6">Payment Expired!</p>
@@ -45,7 +45,7 @@ const OrderSuccess = () => {
   return (
     <div className="flex justify-center flex-col lg:mt-0 mt-15 lg:mx-0 mx-6 lg:mb-0 mb-10">
       <div className="flex justify-center">
-        <img src="/public/assets/success.svg" className="w-[143px] h-24" />
+        <img src="/assets/success.svg" className="w-[143px] h-24" />
       </div>
 
       <p className="text-2xl font-bold text-center pt-6">Payment successful!</p>
@@ -111,35 +111,35 @@ const TOKEN_OPTIONS: IOption[] = [
     name: "Tether",
     symbol: "USDT",
     label: "Tether (USDT)",
-    logo: "/public/assets/usdt.svg",
+    logo: "/assets/usdt.svg",
   },
   {
     value: "usdc",
     name: "USD Coin",
     symbol: "USDC",
     label: "USD Coin (USDC)",
-    logo: "/public/assets/usdc.svg",
+    logo: "/assets/usdc.svg",
   },
   {
     value: "eth",
     name: "Ethereum",
     symbol: "ETH",
     label: "Ethereum (ETH)",
-    logo: "/public/assets/eth.svg",
+    logo: "/assets/eth.svg",
   },
   {
     value: "btc",
     name: "Bitcoin",
     symbol: "BTC",
     label: "Bitcoin (BTC)",
-    logo: "/public/assets/bitcoin.svg",
+    logo: "/assets/bitcoin.svg",
   },
   {
     value: "xlm",
     name: "Stellar",
     symbol: "XLM",
     label: "Stellar (XLM)",
-    logo: "/public/assets/xlm.svg",
+    logo: "/assets/xlm.svg",
   },
 ];
 
@@ -149,7 +149,7 @@ const NETWORK_OPTIONS: IOption[] = [
     name: "Ethereum",
     symbol: "ERC20",
     label: "Ethereum (ERC20)",
-    logo: "/public/assets/eth.svg",
+    logo: "/assets/eth.svg",
     tokens: ["usdt", "usdc", "eth"],
   },
   {
@@ -157,7 +157,7 @@ const NETWORK_OPTIONS: IOption[] = [
     name: "Binance",
     symbol: "BEP20",
     label: "Binance (BEP20)",
-    logo: "/public/assets/bsc.svg",
+    logo: "/assets/bsc.svg",
     tokens: ["usdt", "usdc"],
   },
   {
@@ -165,42 +165,42 @@ const NETWORK_OPTIONS: IOption[] = [
     name: "Tron",
     symbol: "TRC20",
     label: "Tron (TRC20)",
-    logo: "/public/assets/tron.svg",
+    logo: "/assets/tron.svg",
     tokens: ["usdt", "usdc"],
   },
   {
     value: "solana",
     name: "Solana",
     label: "Solana",
-    logo: "/public/assets/solana.svg",
+    logo: "/assets/solana.svg",
     tokens: ["usdt", "usdc"],
   },
   {
     value: "polygon",
     name: "Polygon",
     label: "Polygon",
-    logo: "/public/assets/polygon.svg",
+    logo: "/assets/polygon.svg",
     tokens: ["usdt", "usdc"],
   },
   {
     value: "arbitrum",
     name: "Arbitrum",
     label: "Arbitrum",
-    logo: "/public/assets/arbitrum.svg",
+    logo: "/assets/arbitrum.svg",
     tokens: ["usdt", "usdc", "eth"],
   },
   {
     value: "base",
     name: "Base",
     label: "Base",
-    logo: "/public/assets/base.svg",
+    logo: "/assets/base.svg",
     tokens: ["usdc", "eth"],
   },
   {
     value: "optimism",
     name: "Optimism",
     label: "Optimism",
-    logo: "/public/assets/optimism.svg",
+    logo: "/assets/optimism.svg",
     tokens: ["usdt", "usdc", "eth"],
   },
   {
@@ -208,14 +208,14 @@ const NETWORK_OPTIONS: IOption[] = [
     name: "Bitcoin",
     symbol: "BTC",
     label: "Bitcoin (BTC)",
-    logo: "/public/assets/bitcoin.svg",
+    logo: "/assets/bitcoin.svg",
     tokens: ["btc"],
   },
   {
     value: "stellar",
     name: "Stellar",
     label: "Stellar",
-    logo: "/public/assets/xlm.svg",
+    logo: "/assets/xlm.svg",
     tokens: ["usdc", "xlm"],
   },
 ];
@@ -330,7 +330,7 @@ const OrderPending = () => {
                     aria-label="Copy address"
                     className="relative cursor-pointer shrink-0 flex items-center justify-center"
                   >
-                    <img src="/public/assets/copy.svg" className="w-6 h-6" />
+                    <img src="/assets/copy.svg" className="w-6 h-6" />
 
                     <span
                       className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#6449FF] px-2 py-1 text-xs font-semibold text-white transition-all duration-200 ${copied
@@ -388,8 +388,8 @@ const OrderForm = ({ status }: OrderFormProps) => {
     <div className="flex flex-col min-h-screen">
       <div>
         <div className="lg:mt-[60px] lg:mb-[35px] hidden lg:flex">
-          <img src="/public/assets/payli_medium.svg" />
-          <img src="/public/assets/payli_logotype.svg" className="ml-[14px]" />
+          <img src="/assets/payli_medium.svg" />
+          <img src="/assets/payli_logotype.svg" className="ml-[14px]" />
         </div>
 
         <div className="flex lg:flex-row flex-col-reverse w-full">
@@ -433,7 +433,7 @@ const OrderForm = ({ status }: OrderFormProps) => {
               <p className="text-[#636363]  lg:text-base text-[14px]">To</p>
               <p className="font-bold gap-2 flex items-center lg:text-base text-[16px]">
                 <img
-                  src="/public/assets/telegram.svg"
+                  src="/assets/telegram.svg"
                   className="inline w-[22px] h-[22px]"
                 />
                 @heyamir
@@ -459,7 +459,7 @@ const OrderForm = ({ status }: OrderFormProps) => {
 
               <div className="flex gap-2 items-center">
                 <img
-                  src="/public/assets/receipt.svg"
+                  src="/assets/receipt.svg"
                   className="lg:w-10 w-6 lg:h-10 h-6"
                 />
 

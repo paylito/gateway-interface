@@ -24,15 +24,15 @@ const Footer = () => {
 
   return (
     <div className="xl:flex hidden justify-center items-center fixed bottom-[34px] left-1/2 -translate-x-1/2 gap-1">
-      <img src="/public/assets/shield.svg" className="w-5 h-5" />
+      <img src="/assets/shield.svg" className="w-5 h-5" />
       Secured by
       <div className="flex items-center justify-center">
         <img
-          src="/public/assets/payli_medium.svg"
+          src="/assets/payli_medium.svg"
           className="w-[18.5px] h-[22px]"
         />
         <img
-          src="/public/assets/payli_logotype.svg"
+          src="/assets/payli_logotype.svg"
           className="w-[60px] h-[22px]"
         />
       </div>

@@ -68,7 +68,7 @@ function QuestionMarkBadge() {
       }}
     >
       <img
-        src="/public/assets/question_mark.svg"
+        src="/assets/question_mark.svg"
         style={{ width: 24, height: 24 }}
       />
     </div>
@@ -81,7 +81,7 @@ function DropdownIndicator<Option, IsMulti extends boolean>(
   return (
     <components.DropdownIndicator {...props}>
       <img
-        src="/public/assets/arrow_down.svg"
+        src="/assets/arrow_down.svg"
         style={{ width: 24, height: 24 }}
       />
     </components.DropdownIndicator>
@@ -171,7 +171,7 @@ function Option<Option extends IOption, IsMulti extends boolean>(
 
           {isSelected ? (
             <img
-              src="/public/assets/done.svg"
+              src="/assets/done.svg"
               style={{ width: 20, height: 20 }}
             />
           ) : (
@@ -406,7 +406,7 @@ export default function CSelect({
                 }}
               >
                 <img
-                  src="/public/assets/close_black.svg"
+                  src="/assets/close_black.svg"
                   style={{ width: 24, height: 24 }}
                 />
               </button>

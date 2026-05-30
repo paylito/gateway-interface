@@ -5,11 +5,8 @@ const NotFound = () => {
     <div className="min-h-screen w-full flex items-center justify-center px-5 py-12">
       <div className="w-full max-w-[520px] flex flex-col items-center text-center">
         <div className="flex items-center mb-10">
-          <img src="/public/assets/payli_medium.svg" />
-          <img
-            src="/public/assets/payli_logotype.svg"
-            className="ml-[14px]"
-          />
+          <img src="/assets/payli_medium.svg" />
+          <img src="/assets/payli_logotype.svg" className="ml-[14px]" />
         </div>
 
         <div

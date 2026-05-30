@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <div className="w-screen flex justify-center items-center">
       <img
-        src="/public/assets/background.svg"
+        src="/assets/background.svg"
         className="hidden lg:block fixed bottom-0 left-0 -z-[1]"
       />
       <BrowserRouter>
