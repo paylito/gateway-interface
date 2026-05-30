@@ -54,7 +54,7 @@ const OrderSuccess = () => {
         Your payment of $320 has been sent successfully.
       </p>
 
-      <div className="bg-[#F7F7FF] rounded-[24px] px-6 sm:px-8 py-6 lg:mx-[63px] mt-6">
+      <div className="bg-[#F7F7FF] rounded-[24px] px-6 sm:px-8 py-6 lg:mx-[63px] mt-6 lg:block hidden">
         <p className="text-lg font-bold">
           Want a receipt?{" "}
           <span className="text-xs text-[#636363]">(optional)</span>
