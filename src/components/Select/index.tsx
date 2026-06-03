@@ -290,6 +290,21 @@ export default function CSelect({
         padding: 8,
         maxHeight: isMobile ? "calc(55vh - 58px)" : 280,
         overflowY: "auto",
+        scrollbarWidth: "thin",
+        scrollbarColor: "#C7C7C7 transparent",
+        "&::-webkit-scrollbar": {
+          width: 6,
+        },
+        "&::-webkit-scrollbar-track": {
+          background: "transparent",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          background: "#C7C7C7",
+          borderRadius: 9999,
+        },
+        "&::-webkit-scrollbar-thumb:hover": {
+          background: "#A8A8A8",
+        },
       }),
 
       option: (base, state) => ({

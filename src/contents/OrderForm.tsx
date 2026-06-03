@@ -3,13 +3,17 @@ import Box from "../components/Box";
 import Qrcode from "../components/Qrcode";
 import CSelect, { type IOption } from "../components/Select";
 import Timer from "../components/Timer";
-import OrderLoading from "./OrderLoading";
-
-export type IOrderStatus = "pending" | "success" | "failed";
+import {
+  formatCountdown,
+  formatToken,
+  getTokenAmount,
+  type OrderData,
+  type OrderPhase,
+} from "../lib/order";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const OrderFailed = () => {
+const OrderFailed = ({ amount }: { amount: string }) => {
   return (
     <div className="lg:my-0 lg:mx-6 my-8 mx-6 lg:mb-0 mb-18">
       <div className="flex justify-center">
@@ -19,15 +23,16 @@ const OrderFailed = () => {
       <p className="text-2xl font-bold text-center pt-6">Payment Expired!</p>
 
       <p className="text-lg text-[#636363] text-center pt-4">
-        Your payment of $320 has expired!
+        Your payment of ${amount} has expired!
       </p>
     </div>
   );
 };
 
-const OrderSuccess = () => {
+const OrderSuccess = ({ amount }: { amount: string }) => {
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const isValid = EMAIL_REGEX.test(email.trim());
   const showError = touched && email.length > 0 && !isValid;
@@ -40,6 +45,7 @@ const OrderSuccess = () => {
     }
 
     // Submit the receipt request here.
+    setSubmitted(true);
   };
 
   return (
@@ -51,60 +57,75 @@ const OrderSuccess = () => {
       <p className="text-2xl font-bold text-center pt-6">Payment successful!</p>
 
       <p className="text-lg text-[#636363] text-center pt-4">
-        Your payment of $320 has been sent successfully.
+        Your payment of ${amount} has been sent successfully.
       </p>
 
       <div className="bg-[#F7F7FF] rounded-[24px] px-6 sm:px-8 py-6 lg:mx-[63px] mt-6">
-        <p className="text-lg font-bold">
-          Want a receipt?{" "}
-          <span className="text-xs text-[#636363]">(optional)</span>
-        </p>
+        {submitted ? (
+          <div className="flex items-center gap-3">
+            <img src="/assets/done.svg" className="w-7 h-7 shrink-0" />
 
-        <p className="text-sm text-[#636363]">
-          enter your email to receive your payment receipt
-        </p>
-
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
-            <input
-              className={`bg-white rounded-xl border-2 text-base px-4 py-[10px] text-[#636363] w-full sm:flex-1 outline-none transition-colors ${showError
-                  ? "border-[#FF4D4D] focus:border-[#FF4D4D]"
-                  : "border-[#CBBEFF] focus:border-[#6449FF]"
-                }`}
-              type="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setTouched(true)}
-              aria-invalid={showError}
-              placeholder="you.awesome@gmail.com"
-            />
-
-            <button
-              type="submit"
-              disabled={!isValid}
-              className={`rounded-xl text-base font-bold px-4 py-3 transition-colors ${isValid
-                  ? "cursor-pointer bg-[#6449FF] hover:bg-[#5238e6] text-white"
-                  : "cursor-not-allowed bg-[#CBBEFF] text-white"
-                }`}
-            >
-              Get Receipt
-            </button>
+            <div>
+              <p className="text-lg font-bold">Receipt on its way!</p>
+              <p className="text-sm text-[#636363] break-all">
+                We&apos;ve sent your payment receipt to{" "}
+                <span className="font-semibold">{email.trim()}</span>.
+              </p>
+            </div>
           </div>
-
-          {showError && (
-            <p className="text-[#FF4D4D] text-sm mt-2">
-              Please enter a valid email address.
+        ) : (
+          <>
+            <p className="text-lg font-bold">
+              Want a receipt?{" "}
+              <span className="text-xs text-[#636363]">(optional)</span>
             </p>
-          )}
-        </form>
+
+            <p className="text-sm text-[#636363]">
+              enter your email to receive your payment receipt
+            </p>
+
+            <form onSubmit={handleSubmit}>
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <input
+                  className={`bg-white rounded-xl border-2 text-base px-4 py-[10px] text-black placeholder:text-[#636363] w-full sm:flex-1 outline-none transition-colors ${showError
+                      ? "border-[#FF4D4D] focus:border-[#FF4D4D]"
+                      : "border-[#CBBEFF] focus:border-[#6449FF]"
+                    }`}
+                  type="email"
+                  name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setTouched(true)}
+                  aria-invalid={showError}
+                  placeholder="you.awesome@gmail.com"
+                />
+
+                <button
+                  type="submit"
+                  disabled={!isValid}
+                  className={`rounded-xl text-base font-bold px-4 py-3 transition-colors ${isValid
+                      ? "cursor-pointer bg-[#6449FF] hover:bg-[#5238e6] text-white"
+                      : "cursor-not-allowed bg-[#CBBEFF] text-white"
+                    }`}
+                >
+                  Get Receipt
+                </button>
+              </div>
+
+              {showError && (
+                <p className="text-[#FF4D4D] text-sm mt-2">
+                  Please enter a valid email address.
+                </p>
+              )}
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
 };
 
-const PAYMENT_ADDRESS = "0x4093753409r3abcxd23979307abcdn1235abcdefg";
-
+// EVM-only: every network below collects to the order's `smartAccount`.
 const TOKEN_OPTIONS: IOption[] = [
   {
     value: "usdt",
@@ -127,20 +148,6 @@ const TOKEN_OPTIONS: IOption[] = [
     label: "Ethereum (ETH)",
     logo: "/assets/eth.svg",
   },
-  {
-    value: "btc",
-    name: "Bitcoin",
-    symbol: "BTC",
-    label: "Bitcoin (BTC)",
-    logo: "/assets/bitcoin.svg",
-  },
-  {
-    value: "xlm",
-    name: "Stellar",
-    symbol: "XLM",
-    label: "Stellar (XLM)",
-    logo: "/assets/xlm.svg",
-  },
 ];
 
 const NETWORK_OPTIONS: IOption[] = [
@@ -158,21 +165,6 @@ const NETWORK_OPTIONS: IOption[] = [
     symbol: "BEP20",
     label: "Binance (BEP20)",
     logo: "/assets/bsc.svg",
-    tokens: ["usdt", "usdc"],
-  },
-  {
-    value: "tron",
-    name: "Tron",
-    symbol: "TRC20",
-    label: "Tron (TRC20)",
-    logo: "/assets/tron.svg",
-    tokens: ["usdt", "usdc"],
-  },
-  {
-    value: "solana",
-    name: "Solana",
-    label: "Solana",
-    logo: "/assets/solana.svg",
     tokens: ["usdt", "usdc"],
   },
   {
@@ -203,27 +195,14 @@ const NETWORK_OPTIONS: IOption[] = [
     logo: "/assets/optimism.svg",
     tokens: ["usdt", "usdc", "eth"],
   },
-  {
-    value: "bitcoin",
-    name: "Bitcoin",
-    symbol: "BTC",
-    label: "Bitcoin (BTC)",
-    logo: "/assets/bitcoin.svg",
-    tokens: ["btc"],
-  },
-  {
-    value: "stellar",
-    name: "Stellar",
-    label: "Stellar",
-    logo: "/assets/xlm.svg",
-    tokens: ["usdc", "xlm"],
-  },
 ];
 
-const OrderPending = () => {
+const OrderPending = ({ order }: { order: OrderData }) => {
   const [token, setToken] = useState<IOption | null>(null);
   const [network, setNetwork] = useState<IOption | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const address = order.smartAccount;
 
   // Networks limited to those supporting the chosen token (and vice versa).
   const availableNetworks = useMemo(
@@ -261,9 +240,18 @@ const OrderPending = () => {
   const isComplete =
     !!token && !!network && !!network.tokens?.includes(token.value);
 
+  // Crypto amount to send, derived from the order's USD amount and live rates.
+  const cryptoAmount = useMemo(
+    () =>
+      isComplete
+        ? getTokenAmount(order.amount, order.rates, token.symbol)
+        : null,
+    [isComplete, order.amount, order.rates, token],
+  );
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(PAYMENT_ADDRESS);
+      await navigator.clipboard.writeText(address);
     } catch {
       // Clipboard may be unavailable (e.g. insecure context); ignore silently.
     }
@@ -306,23 +294,30 @@ const OrderPending = () => {
           <>
             <p className="lg:text-2xl text-[18px] lg:pt-6 pt-4 font-medium text-center px-4">
               Please send{" "}
-              <span className="text-[#4D35DB] font-semibold">$320</span> to the
-              address below
+              <span className="text-[#4D35DB] font-semibold">
+                {cryptoAmount != null
+                  ? `${formatToken(cryptoAmount)} ${token.symbol}`
+                  : `$${order.amount}`}
+              </span>
+              {cryptoAmount != null && (
+                <span className="text-[#636363]"> (≈ ${order.amount})</span>
+              )}{" "}
+              to the address below
             </p>
 
             <div className="flex lg:justify-between justify-center items-center lg:p-6 p-4 xl:flex-row flex-col w-full gap-5">
               <div className="min-w-[210px] h-[210px] border-2 border-[#E5DFFF] bg-white flex justify-center items-center rounded-xl">
                 <Qrcode
-                  content={PAYMENT_ADDRESS}
+                  content={address}
                   logo={token.logo}
                   width={180}
                   height={180}
                 />
               </div>
 
-              <div className="flex flex-col items-center justify-center lg:mx-0 w-[90%] max-w-[400px]">
-                <div className="relative bg-white lg:rounded-[12px] rounded-[8px] font-bold text-lg border-2 border-[#E5DFFF] lg:px-3 lg:py-[10px] lg:pl-4 p-3 flex justify-between items-center break-all leading-[22px] gap-[10px] w-full">
-                  <p>{PAYMENT_ADDRESS}</p>
+              <div className="flex flex-col items-center justify-center lg:mx-0 w-[90%]">
+                <div className="relative bg-white lg:rounded-[12px] rounded-[8px] font-medium text-[14px] border-2 border-[#E5DFFF] lg:px-3 lg:py-[10px] lg:pl-4 p-3 flex justify-between items-center break-all leading-[22px] gap-[10px] w-full">
+                  <p>{address}</p>
 
                   <button
                     type="button"
@@ -343,7 +338,7 @@ const OrderPending = () => {
                   </button>
                 </div>
 
-                <div className="w-full lg:mt-6 mt-2 bg-[#FFF4EA] border-2 border-[#ECDAC9] lg:rounded-[12px] rounded-[8px] lg:px-4 px-3 lg:py-2 py-2 text-[12px] lg:text-left text-center">
+                <div className="w-full lg:mt-6 mt-2 bg-[#FFF4EA] border-2 border-[#ECDAC9] lg:rounded-[12px] rounded-[8px] lg:px-4 px-3 lg:py-2 py-2 text-[12px] lg:text-[14px] lg:text-left text-center">
                   Send only{" "}
                   <img
                     src={token.logo}
@@ -366,24 +361,13 @@ const OrderPending = () => {
 };
 
 type OrderFormProps = {
-  status: IOrderStatus;
+  order: OrderData;
+  phase: OrderPhase;
+  /** Time left until expiry, in ms (null outside the pending phase). */
+  remainingMs: number | null;
 };
 
-const OrderForm = ({ status }: OrderFormProps) => {
-  // Show a brief loading state before revealing the pending form. Non-pending
-  // statuses (success / failed) render immediately.
-  const [ready, setReady] = useState(status !== "pending");
-
-  useEffect(() => {
-    if (status !== "pending") return;
-    const timeout = setTimeout(() => setReady(true), 2500);
-    return () => clearTimeout(timeout);
-  }, [status]);
-
-  if (!ready) {
-    return <OrderLoading />;
-  }
-
+const OrderForm = ({ order, phase, remainingMs }: OrderFormProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <div>
@@ -400,11 +384,11 @@ const OrderForm = ({ status }: OrderFormProps) => {
             }}
             className="lg:w-2/3 min-w-0 lg:p-10 border-2 border-transparent mt-[12px] lg:mt-[0px] lg:ml-[0] ml-[18px] lg:mr-[0px] mr-[18px]"
           >
-            {status === "pending" && <OrderPending />}
+            {phase === "pending" && <OrderPending order={order} />}
 
-            {status === "success" && <OrderSuccess />}
+            {phase === "success" && <OrderSuccess amount={order.amount} />}
 
-            {status === "failed" && <OrderFailed />}
+            {phase === "failed" && <OrderFailed amount={order.amount} />}
           </Box>
 
           <Box
@@ -414,10 +398,12 @@ const OrderForm = ({ status }: OrderFormProps) => {
             }}
           >
             <div className="flex gap-[10px] items-center lg:justify-start justify-center">
-              <Timer startDate={Date.now()} endDate={Date.now() + 40000} />
+              <Timer startDate={order.createdAt} endDate={order.expiresAt} />
 
               <div>
-                <p className="font-bold lg:text-lg text-[18px]">14:30</p>
+                <p className="font-bold lg:text-lg text-[18px]">
+                  {formatCountdown(remainingMs ?? 0)}
+                </p>
                 <p className="text-[#636363] text-sm hidden lg:block">
                   Expiration time
                 </p>
@@ -426,7 +412,7 @@ const OrderForm = ({ status }: OrderFormProps) => {
 
             <div className="flex justify-between lg:mt-8 mt-4">
               <p className="text-[#636363] lg:text-base text-[14px]">ID</p>
-              <p className="font-bold lg:text-base text-[16px]">299190</p>
+              <p className="font-bold lg:text-base text-[16px]">{order.id}</p>
             </div>
 
             <div className="flex justify-between lg:mt-[23px] mt-3">
@@ -454,7 +440,9 @@ const OrderForm = ({ status }: OrderFormProps) => {
                   You have to pay
                 </p>
 
-                <p className="text-[40px] font-bold lg:block hidden">$320</p>
+                <p className="text-[40px] font-bold lg:block hidden">
+                  ${order.amount}
+                </p>
               </div>
 
               <div className="flex gap-2 items-center">
@@ -463,7 +451,9 @@ const OrderForm = ({ status }: OrderFormProps) => {
                   className="lg:w-10 w-6 lg:h-10 h-6"
                 />
 
-                <p className="lg:hidden block font-bold text-[22px]">$320</p>
+                <p className="lg:hidden block font-bold text-[22px]">
+                  ${order.amount}
+                </p>
               </div>
             </div>
           </Box>

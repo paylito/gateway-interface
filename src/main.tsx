@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Order from "./pages/Order";
+import OrderPreview from "./pages/OrderPreview";
 import NotFound from "./pages/NotFound";
 
 import "./index.css";
@@ -17,9 +18,12 @@ createRoot(document.getElementById("root")!).render(
       />
       <BrowserRouter>
         <Routes>
-          <Route path="/success" element={<Order status="success" />} />
-          <Route path="/failed" element={<Order status="failed" />} />
-          <Route path="/:id" element={<Order status="pending" />} />
+          {/* Static design previews (no backend needed). */}
+          <Route path="/success" element={<OrderPreview phase="success" />} />
+          <Route path="/failed" element={<OrderPreview phase="failed" />} />
+
+          {/* Real order, fetched + polled by id. */}
+          <Route path="/:id" element={<Order />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
