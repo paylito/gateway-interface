@@ -1,15 +1,27 @@
+import { useParams } from "react-router-dom";
 import Footer from "../components/Footer";
-import OrderForm, { type IOrderStatus } from "../contents/OrderForm";
+import OrderForm from "../contents/OrderForm";
+import OrderLoading from "../contents/OrderLoading";
+import { OrderClosed, OrderError } from "../contents/OrderClosed";
+import NotFound from "./NotFound";
+import { useOrder } from "../hooks/useOrder";
 
-type OrderProps = {
-  status?: IOrderStatus;
-};
+const Order = () => {
+  const { id } = useParams<{ id: string }>();
+  const { phase, order, closedStatus, remainingMs, reload } = useOrder(id);
 
-const Order = ({ status = "pending" }: OrderProps) => {
+  if (phase === "loading") return <OrderLoading />;
+  if (phase === "notfound") return <NotFound />;
+  if (phase === "error") return <OrderError onRetry={reload} />;
+  if (phase === "closed")
+    return <OrderClosed status={closedStatus ?? "closed"} />;
+
+  if (!order) return <OrderLoading />;
+
   return (
     <div className="w-full max-w-[1440px] lg:mx-[10%]">
       <div className="flex flex-col">
-        <OrderForm status={status} />
+        <OrderForm order={order} phase={phase} remainingMs={remainingMs} />
 
         <Footer />
       </div>
