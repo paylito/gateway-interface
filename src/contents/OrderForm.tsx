@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import Box from "../components/Box";
 import Qrcode from "../components/Qrcode";
 import CSelect, { type IOption } from "../components/Select";
@@ -8,6 +9,12 @@ import OrderLoading from "./OrderLoading";
 export type IOrderStatus = "pending" | "success" | "failed";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// The order amount in USD — this is what the merchant ultimately receives.
+// Shoppers pay the equivalent in their chosen crypto plus network & service
+// fees, so the amount they actually send is NOT this number.
+const ORDER_AMOUNT_USD = 320;
+const ORDER_AMOUNT = `$${ORDER_AMOUNT_USD}`; // "$320", for display
 
 const OrderFailed = () => {
   return (
@@ -19,7 +26,7 @@ const OrderFailed = () => {
       <p className="text-2xl font-bold text-center pt-6">Payment Expired!</p>
 
       <p className="text-lg text-[#636363] text-center pt-4">
-        Your payment of $320 has expired!
+        This {ORDER_AMOUNT} order expired before payment was completed.
       </p>
     </div>
   );
@@ -51,7 +58,7 @@ const OrderSuccess = () => {
       <p className="text-2xl font-bold text-center pt-6">Payment successful!</p>
 
       <p className="text-lg text-[#636363] text-center pt-4">
-        Your payment of $320 has been sent successfully.
+        Your payment for this {ORDER_AMOUNT} order was sent successfully.
       </p>
 
       <div className="bg-[#F7F7FF] rounded-[24px] px-6 sm:px-8 py-6 lg:mx-[63px] mt-6 lg:block hidden">
@@ -305,9 +312,19 @@ const OrderPending = () => {
         {isComplete ? (
           <>
             <p className="lg:text-2xl text-[18px] lg:pt-6 pt-4 font-medium text-center px-4">
-              Please send{" "}
-              <span className="text-[#4D35DB] font-semibold">$320</span> to the
-              address below
+              Send{" "}
+              <span className="text-[#4D35DB] font-semibold">
+                {token.symbol}
+              </span>{" "}
+              to the address below
+            </p>
+
+            <p className="text-[12px] text-[#636363] text-center px-6 lg:pt-2 pt-1 leading-snug">
+              The merchant receives{" "}
+              <span className="font-semibold">{ORDER_AMOUNT}</span>. After
+              network &amp; service fees, you&apos;ll send a little more than{" "}
+              {ORDER_AMOUNT} worth of {token.symbol} — confirm the exact amount
+              before sending.
             </p>
 
             <div className="flex lg:justify-between justify-center items-center lg:p-6 p-4 xl:flex-row flex-col w-full gap-5">
@@ -380,6 +397,13 @@ const OrderForm = ({ status }: OrderFormProps) => {
     return () => clearTimeout(timeout);
   }, [status]);
 
+  const { id } = useParams<{ id: string }>();
+
+  // Reflect the payment in the browser tab, e.g. "payli - 299190".
+  useEffect(() => {
+    document.title = id ? `payli - ${id}` : "payli";
+  }, [id]);
+
   if (!ready) {
     return <OrderLoading />;
   }
@@ -408,7 +432,7 @@ const OrderForm = ({ status }: OrderFormProps) => {
           </Box>
 
           <Box
-            className="lg:w-1/3 min-w-0 lg:ml-[32px] ml-[18px] lg:mr-[0px] mr-[18px] lg:px-8 px-4 lg:py-10 py-[16px] max-h-[362px] lg:mt-[0px] mt-[56px]"
+            className="lg:w-1/3 min-w-0 lg:ml-[32px] ml-[18px] lg:mr-[0px] mr-[18px] lg:px-8 px-4 lg:py-10 py-[16px] max-h-[440px] lg:mt-[0px] mt-[56px]"
             style={{
               borderTop: "5px solid #6449FF",
             }}
@@ -451,10 +475,12 @@ const OrderForm = ({ status }: OrderFormProps) => {
             <div className="lg:mt-[23px] mt-3 flex justify-between items-center">
               <div>
                 <p className="text-[#636363] lg:text-base text-[14px]">
-                  You have to pay
+                  Order amount
                 </p>
 
-                <p className="text-[40px] font-bold lg:block hidden">$320</p>
+                <p className="text-[40px] font-bold lg:block hidden">
+                  {ORDER_AMOUNT}
+                </p>
               </div>
 
               <div className="flex gap-2 items-center">
@@ -463,9 +489,16 @@ const OrderForm = ({ status }: OrderFormProps) => {
                   className="lg:w-10 w-6 lg:h-10 h-6"
                 />
 
-                <p className="lg:hidden block font-bold text-[22px]">$320</p>
+                <p className="lg:hidden block font-bold text-[22px]">
+                  {ORDER_AMOUNT}
+                </p>
               </div>
             </div>
+
+            <p className="text-[#9CA3AF] text-[12px] mt-2 leading-snug">
+              Amount the merchant receives. You pay the equivalent in crypto,
+              plus network &amp; service fees.
+            </p>
           </Box>
         </div>
       </div>
