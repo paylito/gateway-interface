@@ -114,6 +114,55 @@ export function formatToken(value: number): string {
   return parseFloat(value.toFixed(6)).toString();
 }
 
+/** Tab <title> + <meta description> for each screen of the order flow.
+ *
+ *  The id comes straight from the URL, so every screen can show it — even the
+ *  loading / not-found / closed ones that never load the order body. */
+export function orderMeta(
+  phase: OrderPhase,
+  id: string | undefined,
+): { title: string; description: string } {
+  // "Order #299190" for titles, "order #299190" for mid-sentence descriptions.
+  const ref = id ? `Order #${id}` : "Order";
+  const subject = id ? `order #${id}` : "this order";
+
+  switch (phase) {
+    case "loading":
+      return { title: `${ref} · Loading`, description: `Loading ${subject}…` };
+    case "pending":
+      return {
+        title: `${ref} · Complete your payment`,
+        description: `Choose an asset and network to pay ${subject} before it expires.`,
+      };
+    case "success":
+      return {
+        title: `${ref} · Payment successful`,
+        description: `Payment for ${subject} was sent successfully.`,
+      };
+    case "failed":
+      return {
+        title: `${ref} · Payment expired`,
+        description: `The payment window for ${subject} has expired.`,
+      };
+    case "closed":
+      return {
+        title: `${ref} · No longer active`,
+        description: `This payment link for ${subject} is no longer active.`,
+      };
+    case "error":
+      return {
+        title: `${ref} · Something went wrong`,
+        description: `We couldn't load ${subject}. Please try again.`,
+      };
+    case "notfound":
+    default:
+      return {
+        title: `${ref} · Not found`,
+        description: `We couldn't find ${subject}.`,
+      };
+  }
+}
+
 // Module-load timestamps, used only by the static preview routes (not render).
 const previewCreated = new Date(Date.now()).toISOString();
 const previewExpires = new Date(Date.now() + 20 * 60 * 1000).toISOString();

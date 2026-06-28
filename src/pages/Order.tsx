@@ -5,10 +5,16 @@ import OrderLoading from "../contents/OrderLoading";
 import { OrderClosed, OrderError } from "../contents/OrderClosed";
 import NotFound from "./NotFound";
 import { useOrder } from "../hooks/useOrder";
+import { usePageMeta } from "../hooks/usePageMeta";
+import { orderMeta } from "../lib/order";
 
 const Order = () => {
   const { id } = useParams<{ id: string }>();
   const { phase, order, closedStatus, remainingMs, reload } = useOrder(id);
+
+  // Keep the tab title + description in sync with the order's current page.
+  const { title, description } = orderMeta(phase, id);
+  usePageMeta(title, description);
 
   if (phase === "loading") return <OrderLoading />;
   if (phase === "notfound") return <NotFound />;

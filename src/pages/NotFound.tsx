@@ -1,6 +1,14 @@
 import Footer from "../components/Footer";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const NotFound = () => {
+  // Standalone catch-all route has no order id; the order's "notfound" phase
+  // renders this too, but Order sets its own id-specific title on top.
+  usePageMeta(
+    "Page not found",
+    "The page you're looking for doesn't exist, expired, or has been moved.",
+  );
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center px-5 py-12">
       <div className="w-full max-w-[520px] flex flex-col items-center text-center">
