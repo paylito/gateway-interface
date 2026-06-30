@@ -4,9 +4,9 @@ import Qrcode from "../components/Qrcode";
 import CSelect, { type IOption } from "../components/Select";
 import Timer from "../components/Timer";
 import {
+  findPricing,
   formatCountdown,
   formatToken,
-  getTokenAmount,
   type OrderData,
   type OrderPhase,
 } from "../lib/order";
@@ -264,14 +264,26 @@ const OrderPending = ({ order }: { order: OrderData }) => {
   const isComplete =
     !!token && !!network && !!network.tokens?.includes(token.value);
 
-  // Crypto amount to send, derived from the order's USD amount and live rates.
-  const cryptoAmount = useMemo(
+  // Crypto amount to send = the chosen network/token's `total` from the order's
+  // pricing matrix (the authoritative, fee-inclusive figure the backend settles
+  // against). NEVER recompute it from the USD amount: that omits the service +
+  // network fee the payer must cover, so the order would be underpaid and stick.
+  const pricingEntry = useMemo(
     () =>
       isComplete
-        ? getTokenAmount(order.amount, order.rates, token.symbol)
-        : null,
-    [isComplete, order.amount, order.rates, token],
+        ? findPricing(order.pricing, network?.value, token?.symbol)
+        : undefined,
+    [isComplete, order.pricing, network, token],
   );
+
+  const cryptoAmount = useMemo(() => {
+    if (!pricingEntry) return null;
+    const total = Number(pricingEntry.total);
+    return Number.isFinite(total) ? total : null;
+  }, [pricingEntry]);
+
+  // USD the payer actually sends (incl. fees) — shown as the "≈ $" hint.
+  const payUsd = pricingEntry?.totalUsd ?? order.amount;
 
   const handleCopy = async () => {
     try {
@@ -324,7 +336,7 @@ const OrderPending = ({ order }: { order: OrderData }) => {
                   : `$${order.amount}`}
               </span>
               {cryptoAmount != null && (
-                <span className="text-[#636363]"> (≈ ${order.amount})</span>
+                <span className="text-[#636363]"> (≈ ${payUsd})</span>
               )}{" "}
               to the address below
             </p>

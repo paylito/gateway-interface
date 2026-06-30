@@ -28,6 +28,28 @@ export interface Rates {
  * few more (per-chain addresses) that we ignore because we only support EVM
  * chains and always collect to `smartAccount`.
  */
+/** One token's pricing row in an order's pricing matrix. All values are decimal
+ *  strings. The PAYER sends `total` (amount + service fee + network fee); the
+ *  merchant ultimately receives `amount`. The backend settles against `total`. */
+export interface TokenPricing {
+  symbol: string;
+  priceUsd: string;
+  amountUsd: string;
+  amount: string;
+  serviceFeeUsd: string;
+  serviceFee: string;
+  networkFeeUsd: string;
+  networkFee: string;
+  totalUsd: string;
+  total: string;
+}
+
+export interface NetworkPricing {
+  network: string;
+  networkFeeUsd: string;
+  tokens: TokenPricing[];
+}
+
 export interface OrderData {
   _id: string;
   id: string;
@@ -39,6 +61,9 @@ export interface OrderData {
   createdAt: string;
   expiresAt: string;
   rates: Rates;
+  /** Authoritative per-network/token pricing from the API. The payer must send
+   *  the chosen row's `total` (amount + service + network fee) — not `amount`. */
+  pricing?: NetworkPricing[];
   user?: {
     username?: string;
     name?: string;
@@ -130,6 +155,23 @@ export function getTokenAmount(
   const usd = parseFloat(amountUsd);
   if (!Number.isFinite(usd)) return null;
   return usd / rate;
+}
+
+/**
+ * Find the pricing row for a network/token pair in an order's pricing matrix.
+ * This matrix is the single source of truth the backend settles against, so the
+ * UI must read the amount to charge from here (`total`) rather than recomputing
+ * it from the USD amount — which omits the service + network fee the payer covers.
+ */
+export function findPricing(
+  pricing: NetworkPricing[] | undefined,
+  network: string | undefined,
+  symbol: string | undefined,
+): TokenPricing | undefined {
+  if (!pricing || !network || !symbol) return undefined;
+  return pricing
+    .find((p) => p.network === network)
+    ?.tokens.find((t) => t.symbol === symbol);
 }
 
 /** Compact token amount: up to 6 decimals with trailing zeros trimmed. */
