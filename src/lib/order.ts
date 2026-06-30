@@ -17,7 +17,6 @@ export interface Rates {
   TRX: number;
   USDC: number;
   SOL: number;
-  DAI: number;
   CELO: number;
   POL: number;
   USDT: number;
@@ -40,6 +39,10 @@ export interface OrderData {
   createdAt: string;
   expiresAt: string;
   rates: Rates;
+  user?: {
+    username?: string;
+    name?: string;
+  };
 }
 
 /** What the API returns: `data` is the order object while pending, otherwise a
@@ -60,6 +63,7 @@ export type OrderPhase =
   | "success"
   | "failed";
 
+/** Backend words that mean the payment resolved successfully. */
 const SUCCESS_STATUSES = [
   "completed",
   "complete",
@@ -72,14 +76,33 @@ const SUCCESS_STATUSES = [
   "done",
 ];
 
-/** Map a backend status word to a resolved outcome for the active payer. */
+/** Backend words that mean the order is permanently closed *without* payment. */
+const FAILED_STATUSES = [
+  "expired",
+  "cancelled",
+  "canceled",
+  "failed",
+  "rejected",
+  "voided",
+];
+
+/**
+ * Map a backend status word to a resolved outcome for the active payer.
+ *
+ * Only an explicit success or failure word resolves the order. Pending and every
+ * in-progress state (processing, detected, confirming, settling, manual_review,
+ * …) — plus anything unrecognised — fall through to "pending" so the UI keeps
+ * waiting for the backend's final word. The backend is the single source of
+ * truth for the outcome; the local countdown must never decide it, otherwise a
+ * deposit that's still confirming gets shown as expired.
+ */
 export function classifyStatus(
   status: string,
 ): "success" | "failed" | "pending" {
   const s = status.trim().toLowerCase();
-  if (s === "pending") return "pending";
-  if (SUCCESS_STATUSES.includes(s)) return "success";
-  return "failed"; // expired / cancelled / failed / rejected / unknown
+  if (SUCCESS_STATUSES.some((word) => s.includes(word))) return "success";
+  if (FAILED_STATUSES.some((word) => s.includes(word))) return "failed";
+  return "pending"; // processing / confirming / settling / manual_review / unknown
 }
 
 /** Non-pending orders come back as `data: "Order is <status>"`; pull the word. */
@@ -184,7 +207,6 @@ export const MOCK_ORDER: OrderData = {
     TRX: 0.12,
     USDC: 1,
     SOL: 145,
-    DAI: 1,
     CELO: 0.7,
     POL: 0.55,
     USDT: 1,

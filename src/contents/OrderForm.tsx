@@ -29,6 +29,30 @@ const OrderFailed = ({ amount }: { amount: string }) => {
   );
 };
 
+/**
+ * Shown while the payment window has elapsed but the backend hasn't resolved the
+ * order yet. We deliberately do NOT say "expired" here — a deposit made near the
+ * deadline can still be confirming/settling on-chain. The page keeps polling and
+ * flips to success or expired only once the backend says so.
+ */
+const OrderVerifying = () => {
+  return (
+    <div className="bg-[#F7F7FF] rounded-xl lg:mt-8 m-4 mt-6 flex flex-col justify-center items-center min-h-[280px] px-6 py-10 text-center">
+      <div className="w-12 h-12 rounded-full border-4 border-[#E5DFFF] border-t-[#6449FF] animate-spin" />
+
+      <p className="lg:text-2xl text-[18px] pt-6 font-semibold">
+        Checking for your payment…
+      </p>
+
+      <p className="text-[#636363] text-sm lg:text-base pt-3 max-w-[420px]">
+        The payment window has ended. If you&apos;ve already sent the payment,
+        hang tight — we&apos;re confirming it on-chain. This page updates
+        automatically.
+      </p>
+    </div>
+  );
+};
+
 const OrderSuccess = ({ amount }: { amount: string }) => {
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
@@ -365,9 +389,18 @@ type OrderFormProps = {
   phase: OrderPhase;
   /** Time left until expiry, in ms (null outside the pending phase). */
   remainingMs: number | null;
+  /** Timer elapsed but the backend hasn't resolved yet — show the verifying hold. */
+  awaitingConfirmation?: boolean;
 };
 
-const OrderForm = ({ order, phase, remainingMs }: OrderFormProps) => {
+const OrderForm = ({
+  order,
+  phase,
+  remainingMs,
+  awaitingConfirmation = false,
+}: OrderFormProps) => {
+  const userName = order.user?.username || order.user?.name || "USER";
+
   return (
     <div className="flex flex-col min-h-screen">
       <div>
@@ -384,7 +417,12 @@ const OrderForm = ({ order, phase, remainingMs }: OrderFormProps) => {
             }}
             className="lg:w-2/3 min-w-0 lg:p-10 border-2 border-transparent mt-[12px] lg:mt-[0px] lg:ml-[0] ml-[18px] lg:mr-[0px] mr-[18px]"
           >
-            {phase === "pending" && <OrderPending order={order} />}
+            {phase === "pending" &&
+              (awaitingConfirmation ? (
+                <OrderVerifying />
+              ) : (
+                <OrderPending order={order} />
+              ))}
 
             {phase === "success" && <OrderSuccess amount={order.amount} />}
 
@@ -422,7 +460,7 @@ const OrderForm = ({ order, phase, remainingMs }: OrderFormProps) => {
                   src="/assets/telegram.svg"
                   className="inline w-[22px] h-[22px]"
                 />
-                @heyamir
+                {userName}
               </p>
             </div>
 
@@ -437,7 +475,7 @@ const OrderForm = ({ order, phase, remainingMs }: OrderFormProps) => {
             <div className="lg:mt-[23px] mt-3 flex justify-between items-center">
               <div>
                 <p className="text-[#636363] lg:text-base text-[14px]">
-                  You have to pay
+                  Order amount
                 </p>
 
                 <p className="text-[40px] font-bold lg:block hidden">

@@ -10,7 +10,8 @@ import { orderMeta } from "../lib/order";
 
 const Order = () => {
   const { id } = useParams<{ id: string }>();
-  const { phase, order, closedStatus, remainingMs, reload } = useOrder(id);
+  const { phase, order, closedStatus, remainingMs, awaitingConfirmation, reload } =
+    useOrder(id);
 
   // Keep the tab title + description in sync with the order's current page.
   const { title, description } = orderMeta(phase, id);
@@ -27,7 +28,12 @@ const Order = () => {
   return (
     <div className="w-full max-w-[1440px] lg:mx-[10%]">
       <div className="flex flex-col">
-        <OrderForm order={order} phase={phase} remainingMs={remainingMs} />
+        <OrderForm
+          order={order}
+          phase={phase}
+          remainingMs={remainingMs}
+          awaitingConfirmation={awaitingConfirmation}
+        />
 
         <Footer />
       </div>

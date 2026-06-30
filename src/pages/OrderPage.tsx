@@ -9,7 +9,6 @@ interface Rates {
   TRX: number;
   USDC: number;
   SOL: number;
-  DAI: number;
   CELO: number;
   POL: number;
   USDT: number;
