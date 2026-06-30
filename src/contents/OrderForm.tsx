@@ -324,9 +324,6 @@ const OrderPending = ({ order }: { order: OrderData }) => {
     return Number.isFinite(total) ? total : null;
   }, [pricingEntry]);
 
-  // USD the payer actually sends (incl. fees) — shown as the "≈ $" hint.
-  const payUsd = pricingEntry?.totalUsd ?? order.amount;
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(address);
@@ -376,10 +373,7 @@ const OrderPending = ({ order }: { order: OrderData }) => {
                 {cryptoAmount != null
                   ? `${formatToken(cryptoAmount)} ${token.symbol}`
                   : `$${order.amount}`}
-              </span>
-              {cryptoAmount != null && (
-                <span className="text-[#636363]"> (≈ ${payUsd})</span>
-              )}{" "}
+              </span>{" "}
               to the address below
             </p>
 

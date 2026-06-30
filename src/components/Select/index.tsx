@@ -88,6 +88,10 @@ function DropdownIndicator<Option, IsMulti extends boolean>(
   );
 }
 
+function IndicatorSeparator() {
+  return null;
+}
+
 function PlaceholderMaker(placeHolder: string) {
   function Placeholder<Option, IsMulti extends boolean>(
     props: PlaceholderProps<Option, IsMulti>,
@@ -339,103 +343,117 @@ export default function CSelect({
     };
   }, []);
 
-  function Menu<
-    Option,
-    IsMulti extends boolean,
-    Group extends GroupBase<Option>,
-  >(props: MenuProps<Option, IsMulti, Group>) {
-    if (!isMobile) {
-      return <components.Menu {...props}>{props.children}</components.Menu>;
-    }
+  // Memoize the custom react-select components so their function identities stay
+  // stable across re-renders. A parent re-render (e.g. the countdown that ticks
+  // every second) would otherwise hand react-select brand-new component
+  // functions, making it remount the menu and replay its open animation on
+  // every tick. (Control / Option / DropdownIndicator are already stable.)
+  const Placeholder = useMemo(() => PlaceholderMaker(placeholder), [placeholder]);
 
-    if (typeof document === "undefined") return null;
+  const SingleValue = useMemo(
+    () => SingleValueMaker(compactValue),
+    [compactValue],
+  );
 
-    return createPortal(
-      <div>
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "stretch",
-            background: "rgba(0,0,0,0.35)",
-          }}
-          onMouseDown={(e) => {
-            // Close when tapping the dimmed backdrop.
-            if (e.target === e.currentTarget) setMenuOpen(false);
-          }}
-        >
+  const Menu = useMemo(() => {
+    return function Menu<
+      Option,
+      IsMulti extends boolean,
+      Group extends GroupBase<Option>,
+    >(props: MenuProps<Option, IsMulti, Group>) {
+      if (!isMobile) {
+        return <components.Menu {...props}>{props.children}</components.Menu>;
+      }
+
+      if (typeof document === "undefined") return null;
+
+      return createPortal(
+        <div>
           <div
-            ref={props.innerRef as React.RefObject<HTMLDivElement>}
-            {...props.innerProps}
             style={{
-              pointerEvents: "auto",
-              width: "100%",
-              maxHeight: "55vh",
-              background: "#FFFFFF",
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              boxShadow: "0 -12px 40px rgba(0,0,0,0.16)",
-              overflow: "hidden",
-              animation: "bottomSheet 0.18s ease",
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
               display: "flex",
-              flexDirection: "column",
+              alignItems: "flex-end",
+              justifyContent: "stretch",
+              background: "rgba(0,0,0,0.35)",
+            }}
+            onMouseDown={(e) => {
+              // Close when tapping the dimmed backdrop.
+              if (e.target === e.currentTarget) setMenuOpen(false);
             }}
           >
             <div
+              ref={props.innerRef as React.RefObject<HTMLDivElement>}
+              {...props.innerProps}
               style={{
+                pointerEvents: "auto",
+                width: "100%",
+                maxHeight: "55vh",
+                background: "#FFFFFF",
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                boxShadow: "0 -12px 40px rgba(0,0,0,0.16)",
+                overflow: "hidden",
+                animation: "bottomSheet 0.18s ease",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "14px 16px",
-                borderBottom: "1px solid #E5E7EB",
-                flex: "0 0 auto",
+                flexDirection: "column",
               }}
             >
               <div
                 style={{
-                  fontWeight: 700,
-                  fontSize: 16,
-                  color: "#111827",
-                }}
-              >
-                {placeholder}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setMenuOpen(false)}
-                aria-label="Close"
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 9999,
-                  border: "none",
-                  background: "transparent",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
+                  justifyContent: "space-between",
+                  padding: "14px 16px",
+                  borderBottom: "1px solid #E5E7EB",
+                  flex: "0 0 auto",
                 }}
               >
-                <img
-                  src="/assets/close_black.svg"
-                  style={{ width: 24, height: 24 }}
-                />
-              </button>
-            </div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 16,
+                    color: "#111827",
+                  }}
+                >
+                  {placeholder}
+                </div>
 
-            <div style={{ flex: "1 1 auto", overflow: "hidden" }}>
-              {props.children}
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(false)}
+                  aria-label="Close"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9999,
+                    border: "none",
+                    background: "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  <img
+                    src="/assets/close_black.svg"
+                    style={{ width: 24, height: 24 }}
+                  />
+                </button>
+              </div>
+
+              <div style={{ flex: "1 1 auto", overflow: "hidden" }}>
+                {props.children}
+              </div>
             </div>
           </div>
-        </div>
-      </div>,
-      document.body,
-    );
-  }
+        </div>,
+        document.body,
+      );
+    };
+  }, [isMobile, placeholder]);
 
   return (
     <div className="w-full">
@@ -472,11 +490,11 @@ export default function CSelect({
         className="w-full"
         components={{
           Control,
-          Placeholder: PlaceholderMaker(placeholder),
-          SingleValue: SingleValueMaker(compactValue),
+          Placeholder,
+          SingleValue,
           Option,
           DropdownIndicator,
-          IndicatorSeparator: () => null,
+          IndicatorSeparator,
           Menu,
         }}
       />
