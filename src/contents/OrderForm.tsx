@@ -7,6 +7,7 @@ import {
   findPricing,
   formatCountdown,
   formatToken,
+  receiptEndpoint,
   type OrderData,
   type OrderPhase,
 } from "../lib/order";
@@ -53,23 +54,58 @@ const OrderVerifying = () => {
   );
 };
 
-const OrderSuccess = ({ amount }: { amount: string }) => {
+const OrderSuccess = ({ id, amount }: { id: string; amount: string }) => {
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isValid = EMAIL_REGEX.test(email.trim());
   const showError = touched && email.length > 0 && !isValid;
+  const canSubmit = isValid && !submitting;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isValid) {
       setTouched(true);
       return;
     }
+    if (submitting) return;
 
-    // Submit the receipt request here.
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Ask the API to email the receipt for this finished order. The backend
+      // replies 202 immediately and sends the mail out of band.
+      const res = await fetch(receiptEndpoint(id), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const body = (await res.json().catch(() => null)) as {
+        success?: boolean;
+        message?: string;
+      } | null;
+
+      if (!res.ok || !body?.success) {
+        // Keep the input so the payer can fix the address or retry; surface the
+        // backend's reason (already requested, mailer unavailable, …) when given.
+        setSubmitError(
+          body?.message ?? "We couldn't send your receipt. Please try again.",
+        );
+        return;
+      }
+
+      // Accepted — the receipt is on its way. Hide the input now.
+      setSubmitted(true);
+    } catch {
+      setSubmitError("We couldn't reach the server. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -111,36 +147,42 @@ const OrderSuccess = ({ amount }: { amount: string }) => {
             <form onSubmit={handleSubmit}>
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
                 <input
-                  className={`bg-white rounded-xl border-2 text-base px-4 py-[10px] text-black placeholder:text-[#636363] w-full sm:flex-1 outline-none transition-colors ${showError
+                  className={`bg-white rounded-xl border-2 text-base px-4 py-[10px] text-black placeholder:text-[#636363] w-full sm:flex-1 outline-none transition-colors disabled:opacity-60 ${showError
                       ? "border-[#FF4D4D] focus:border-[#FF4D4D]"
                       : "border-[#CBBEFF] focus:border-[#6449FF]"
                     }`}
                   type="email"
                   name="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
                   onBlur={() => setTouched(true)}
+                  disabled={submitting}
                   aria-invalid={showError}
                   placeholder="you.awesome@gmail.com"
                 />
 
                 <button
                   type="submit"
-                  disabled={!isValid}
-                  className={`rounded-xl text-base font-bold px-4 py-3 transition-colors ${isValid
+                  disabled={!canSubmit}
+                  className={`rounded-xl text-base font-bold px-4 py-3 transition-colors ${canSubmit
                       ? "cursor-pointer bg-[#6449FF] hover:bg-[#5238e6] text-white"
                       : "cursor-not-allowed bg-[#CBBEFF] text-white"
                     }`}
                 >
-                  Get Receipt
+                  {submitting ? "Sending…" : "Get Receipt"}
                 </button>
               </div>
 
-              {showError && (
+              {showError ? (
                 <p className="text-[#FF4D4D] text-sm mt-2">
                   Please enter a valid email address.
                 </p>
-              )}
+              ) : submitError ? (
+                <p className="text-[#FF4D4D] text-sm mt-2">{submitError}</p>
+              ) : null}
             </form>
           </>
         )}
@@ -436,7 +478,9 @@ const OrderForm = ({
                 <OrderPending order={order} />
               ))}
 
-            {phase === "success" && <OrderSuccess amount={order.amount} />}
+            {phase === "success" && (
+              <OrderSuccess id={order.id} amount={order.amount} />
+            )}
 
             {phase === "failed" && <OrderFailed amount={order.amount} />}
           </Box>

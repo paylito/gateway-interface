@@ -8,6 +8,9 @@ const API_BASE =
 /** GET endpoint for a single order. */
 export const orderEndpoint = (id: string) => `${API_BASE}/orders/${id}`;
 
+/** POST endpoint that emails a one-time receipt for a finished order. */
+export const receiptEndpoint = (id: string) => `${API_BASE}/orders/${id}/receipt`;
+
 /** USD price per 1 unit of each token, returned (populated) on the order. */
 export interface Rates {
   BTC: number;
