@@ -67,9 +67,13 @@ export interface OrderData {
   /** Authoritative per-network/token pricing from the API. The payer must send
    *  the chosen row's `total` (amount + service + network fee) — not `amount`. */
   pricing?: NetworkPricing[];
+  /** True when the order was created from a donation link. `user` is then the
+   *  donation page's public handle — not a telegram account — so the UI must
+   *  not show the telegram icon next to it. */
+  isDonation?: boolean;
   user?: {
-    username?: string;
-    name?: string;
+    username?: string | null;
+    name?: string | null;
   };
 }
 
@@ -180,6 +184,57 @@ export function findPricing(
 /** Compact token amount: up to 6 decimals with trailing zeros trimmed. */
 export function formatToken(value: number): string {
   return parseFloat(value.toFixed(6)).toString();
+}
+
+/** USD figure for the fee breakdown: always shows cents ("$5.00") and keeps up
+ *  to 4 decimals when the fee math produces them ("$0.1665"), so the breakdown
+ *  rows visibly add up to the exact total. */
+export function formatUsd(value: string): string {
+  const n = parseFloat(value);
+  if (!Number.isFinite(n)) return `$${value}`;
+  return `$${n.toFixed(4).replace(/(\.\d{2}\d*?)0+$/, "$1")}`;
+}
+
+/** The USD rows behind the payer's total: the order itself, our service fee on
+ *  top, and the chosen network's fee. The last two of these depend on the
+ *  selected network, so they're null until one is picked. */
+export interface UsdBreakdown {
+  amountUsd: string;
+  serviceFeeUsd: string;
+  networkFeeUsd: string | null;
+  totalUsd: string | null;
+}
+
+/**
+ * Assemble the USD fee breakdown for an order, given the currently selected
+ * network (undefined while none is picked). Reads from the order's pricing
+ * matrix — the same source the charged `total` comes from — so the breakdown
+ * always explains exactly the figure the payer is asked to send.
+ */
+export function getUsdBreakdown(
+  order: OrderData,
+  networkId: string | undefined,
+): UsdBreakdown | null {
+  const pricing = order.pricing;
+  if (!pricing?.length) return null;
+
+  // The service fee is a property of the order (a percent of the amount, with
+  // a cap), so it's identical on every pricing row — read it off the first.
+  const serviceFeeUsd = pricing[0].tokens[0]?.serviceFeeUsd;
+  if (serviceFeeUsd === undefined) return null;
+
+  const entry = networkId
+    ? pricing.find((p) => p.network === networkId)
+    : undefined;
+
+  return {
+    amountUsd: order.amount,
+    serviceFeeUsd,
+    networkFeeUsd: entry?.networkFeeUsd ?? null,
+    // totalUsd (= amount + service fee + network fee) is the same for every
+    // token on a network, so any row of the chosen network works.
+    totalUsd: entry?.tokens[0]?.totalUsd ?? null,
+  };
 }
 
 /** Tab <title> + <meta description> for each screen of the order flow.

@@ -7,6 +7,8 @@ import {
   findPricing,
   formatCountdown,
   formatToken,
+  formatUsd,
+  getUsdBreakdown,
   receiptEndpoint,
   type OrderData,
   type OrderPhase,
@@ -263,9 +265,19 @@ const NETWORK_OPTIONS: IOption[] = [
   },
 ];
 
-const OrderPending = ({ order }: { order: OrderData }) => {
+// The network selection is owned by OrderForm rather than here: the summary
+// box's fee breakdown re-prices on every network change, so the choice has to
+// live above both columns.
+const OrderPending = ({
+  order,
+  network,
+  onNetworkChange,
+}: {
+  order: OrderData;
+  network: IOption | null;
+  onNetworkChange: (network: IOption | null) => void;
+}) => {
   const [token, setToken] = useState<IOption | null>(null);
-  const [network, setNetwork] = useState<IOption | null>(null);
   const [copied, setCopied] = useState(false);
 
   const address = order.smartAccount;
@@ -291,12 +303,12 @@ const OrderPending = ({ order }: { order: OrderData }) => {
     setToken(next);
     // Drop an incompatible network so the user must reselect a supported one.
     if (next && network && !network.tokens?.includes(next.value)) {
-      setNetwork(null);
+      onNetworkChange(null);
     }
   };
 
   const handleNetworkChange = (next: IOption | null) => {
-    setNetwork(next);
+    onNetworkChange(next);
     // Drop an incompatible token so the user must reselect a supported one.
     if (next && token && !next.tokens?.includes(token.value)) {
       setToken(null);
@@ -447,7 +459,17 @@ const OrderForm = ({
   remainingMs,
   awaitingConfirmation = false,
 }: OrderFormProps) => {
+  // The chosen network lives up here so both columns see it: OrderPending
+  // renders the pickers, while the summary box's fee breakdown below tracks
+  // the network's fee live.
+  const [network, setNetwork] = useState<IOption | null>(null);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+
   const userName = order.user?.username || order.user?.name || "USER";
+
+  // USD fee breakdown; only offered while the order is still payable.
+  const breakdown =
+    phase === "pending" ? getUsdBreakdown(order, network?.value) : null;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -469,7 +491,11 @@ const OrderForm = ({
               (awaitingConfirmation ? (
                 <OrderVerifying />
               ) : (
-                <OrderPending order={order} />
+                <OrderPending
+                  order={order}
+                  network={network}
+                  onNetworkChange={setNetwork}
+                />
               ))}
 
             {phase === "success" && (
@@ -480,7 +506,7 @@ const OrderForm = ({
           </Box>
 
           <Box
-            className="lg:w-1/3 min-w-0 lg:ml-[32px] ml-[18px] lg:mr-[0px] mr-[18px] lg:px-8 px-4 lg:py-10 py-[16px] max-h-[362px] lg:mt-[0px] mt-[56px]"
+            className="lg:w-1/3 min-w-0 lg:ml-[32px] ml-[18px] lg:mr-[0px] mr-[18px] lg:px-8 px-4 lg:py-10 py-[16px] h-fit lg:mt-[0px] mt-[56px]"
             style={{
               borderTop: "5px solid #6449FF",
             }}
@@ -506,10 +532,14 @@ const OrderForm = ({
             <div className="flex justify-between lg:mt-[23px] mt-3">
               <p className="text-[#636363]  lg:text-base text-[14px]">To</p>
               <p className="font-bold gap-2 flex items-center lg:text-base text-[16px]">
-                <img
-                  src="/assets/telegram.svg"
-                  className="inline w-[22px] h-[22px]"
-                />
+                {/* Donation orders show the donation page's handle, which isn't
+                    a telegram account — so no telegram icon for them. */}
+                {!order.isDonation && (
+                  <img
+                    src="/assets/telegram.svg"
+                    className="inline w-[22px] h-[22px]"
+                  />
+                )}
                 {userName}
               </p>
             </div>
@@ -524,9 +554,28 @@ const OrderForm = ({
 
             <div className="lg:mt-[23px] mt-3 flex justify-between items-center">
               <div>
-                <p className="text-[#636363] lg:text-base text-[14px]">
-                  Order amount
-                </p>
+                <div className="flex items-center gap-[6px]">
+                  <p className="text-[#636363] lg:text-base text-[14px]">
+                    Order amount
+                  </p>
+
+                  {breakdown && (
+                    <button
+                      type="button"
+                      onClick={() => setBreakdownOpen((open) => !open)}
+                      title="See how your total is calculated"
+                      aria-label="See how your total is calculated"
+                      aria-expanded={breakdownOpen}
+                      className="cursor-pointer flex items-center justify-center"
+                    >
+                      <img
+                        src="/assets/arrow_down.svg"
+                        className={`w-5 h-5 transition-transform duration-200 ${breakdownOpen ? "rotate-180" : ""
+                          }`}
+                      />
+                    </button>
+                  )}
+                </div>
 
                 <p className="text-[40px] font-bold lg:block hidden">
                   ${order.amount}
@@ -544,6 +593,61 @@ const OrderForm = ({
                 </p>
               </div>
             </div>
+
+            {/* What the payer is actually charged: the order itself, our
+                service fee, and the chosen network's fee. The network fee (and
+                with it the total) re-prices whenever the network changes. */}
+            {breakdown && breakdownOpen && (
+              <div className="bg-[#F7F7FF] rounded-[12px] lg:mt-4 mt-3 px-4 py-3 text-[14px]">
+                <div className="flex justify-between items-center">
+                  <p className="text-[#636363]">Order amount</p>
+                  <p className="font-semibold">
+                    {formatUsd(breakdown.amountUsd)}
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-[#636363]">Service fee</p>
+                  <p className="font-semibold">
+                    {formatUsd(breakdown.serviceFeeUsd)}
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-[#636363]">
+                    Network fee{network ? ` · ${network.name}` : ""}
+                  </p>
+                  <p className="font-semibold">
+                    {breakdown.networkFeeUsd !== null
+                      ? formatUsd(breakdown.networkFeeUsd)
+                      : "—"}
+                  </p>
+                </div>
+
+                <div
+                  className="w-full h-[1px] my-3"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(to right, #C7C7C7 0 6px, transparent 6px 12px)",
+                  }}
+                />
+
+                <div className="flex justify-between items-center">
+                  <p className="font-semibold">Total</p>
+                  <p className="font-bold">
+                    {breakdown.totalUsd !== null
+                      ? formatUsd(breakdown.totalUsd)
+                      : "—"}
+                  </p>
+                </div>
+
+                {!network && (
+                  <p className="text-[#9CA3AF] text-[12px] mt-2">
+                    Choose a network to see its fee and your final total.
+                  </p>
+                )}
+              </div>
+            )}
           </Box>
         </div>
       </div>
