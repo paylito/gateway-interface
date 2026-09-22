@@ -4,4 +4,4 @@ services:
     pull_policy: never
     restart: on-failure
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3004:3000"
